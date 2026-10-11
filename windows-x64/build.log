@@ -1,0 +1,276 @@
+Source commit: 995e6a9e2b8e5bf7a75ca1ec421acbe005787475
+Run: https://github.com/heiyuan0801/huabu-releases/actions/runs/38154941380
+Cloning into 'D:\a\_temp\flutter-sdk'...
+Note: switching to 'abaf9c523780a608bd46686fd5e53740a07077f8'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+Updating files:  20% (3355/16076)
+Updating files:  21% (3376/16076)
+Updating files:  22% (3537/16076)
+Updating files:  23% (3698/16076)
+Updating files:  24% (3859/16076)
+Updating files:  25% (4019/16076)
+Updating files:  26% (4180/16076)
+Updating files:  27% (4341/16076)
+Updating files:  28% (4502/16076)
+Updating files:  29% (4663/16076)
+Updating files:  30% (4823/16076)
+Updating files:  31% (4984/16076)
+Updating files:  32% (5145/16076)
+Updating files:  33% (5306/16076)
+Updating files:  34% (5466/16076)
+Updating files:  35% (5627/16076)
+Updating files:  36% (5788/16076)
+Updating files:  37% (5949/16076)
+Updating files:  38% (6109/16076)
+Updating files:  39% (6270/16076)
+Updating files:  40% (6431/16076)
+Updating files:  40% (6489/16076)
+Updating files:  41% (6592/16076)
+Updating files:  42% (6752/16076)
+Updating files:  43% (6913/16076)
+Updating files:  44% (7074/16076)
+Updating files:  45% (7235/16076)
+Updating files:  46% (7395/16076)
+Updating files:  47% (7556/16076)
+Updating files:  48% (7717/16076)
+Updating files:  49% (7878/16076)
+Updating files:  50% (8038/16076)
+Updating files:  51% (8199/16076)
+Updating files:  52% (8360/16076)
+Updating files:  53% (8521/16076)
+Updating files:  54% (8682/16076)
+Updating files:  55% (8842/16076)
+Updating files:  55% (8865/16076)
+Updating files:  56% (9003/16076)
+Updating files:  57% (9164/16076)
+Updating files:  58% (9325/16076)
+Updating files:  59% (9485/16076)
+Updating files:  60% (9646/16076)
+Updating files:  61% (9807/16076)
+Updating files:  62% (9968/16076)
+Updating files:  63% (10128/16076)
+Updating files:  64% (10289/16076)
+Updating files:  65% (10450/16076)
+Updating files:  66% (10611/16076)
+Updating files:  67% (10771/16076)
+Updating files:  68% (10932/16076)
+Updating files:  69% (11093/16076)
+Updating files:  69% (11249/16076)
+Updating files:  70% (11254/16076)
+Updating files:  71% (11414/16076)
+Updating files:  72% (11575/16076)
+Updating files:  73% (11736/16076)
+Updating files:  74% (11897/16076)
+Updating files:  75% (12057/16076)
+Updating files:  76% (12218/16076)
+Updating files:  77% (12379/16076)
+Updating files:  78% (12540/16076)
+Updating files:  79% (12701/16076)
+Updating files:  80% (12861/16076)
+Updating files:  81% (13022/16076)
+Updating files:  82% (13183/16076)
+Updating files:  83% (13344/16076)
+Updating files:  84% (13504/16076)
+Updating files:  85% (13665/16076)
+Updating files:  86% (13826/16076)
+Updating files:  87% (13987/16076)
+Updating files:  88% (14147/16076)
+Updating files:  88% (14236/16076)
+Updating files:  89% (14308/16076)
+Updating files:  90% (14469/16076)
+Updating files:  91% (14630/16076)
+Updating files:  92% (14790/16076)
+Updating files:  93% (14951/16076)
+Updating files:  94% (15112/16076)
+Updating files:  95% (15273/16076)
+Updating files:  96% (15433/16076)
+Updating files:  97% (15594/16076)
+Updating files:  98% (15755/16076)
+Updating files:  99% (15916/16076)
+Updating files: 100% (16076/16076)
+Updating files: 100% (16076/16076), done.
+Checking Dart SDK version... 
+Downloading Dart SDK from Flutter engine ... 
+Expanding downloaded archive with 7z...
+Building flutter tool... 
+Running pub upgrade... 
+Resolving dependencies...
+Downloading packages...
+Got dependencies.
+Flutter 3.47.7 • channel [user-branch] • https://github.com/flutter/flutter.git
+Framework • revision abaf9c5237 (3 days ago) • 2026-10-08 09:51:21 -0700
+Engine • hash d8a2d6c768c334d53e16277f837970ffa1e2de81 (revision deb287481e) (3 days ago) • 2026-10-07 17:09:12.000Z
+Tools • Dart 3.13.5 • DevTools 2.60.0
+[1/10] Material Fonts                                              287ms
+[2/10] Gradle Wrapper                                                8ms
+[3/10] Flutter SDK
+  ├─ [1/5] sky_engine                                               86ms
+  ├─ [2/5] flutter_gpu                                              10ms
+  ├─ [3/5] flutter_patched_sdk                                     210ms
+  ├─ [4/5] flutter_patched_sdk_product                             178ms
+  └─ [5/5] windows-x64                                           1,230ms
+[10/10] windows-x64/font-subset                                    113ms
+Resolving dependencies...
+Downloading packages...
+  archive 4.5.0 (4.5.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  cross_file 0.3.5+5 (0.4.0 available)
+  dbus 0.7.15 (0.8.0 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  test_api 0.7.12 (0.7.15 available)
+  vector_math 2.4.0 (2.4.3 available)
+  wakelock_plus 1.8.0 (1.8.1 available)
+Got dependencies!
+8 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+[1/1] Windows SDK
+  ├─ [1/4] windows-x64-debug/windows-x64-flutter                    3.6s
+  ├─ [2/4] windows-x64/flutter-cpp-client-wrapper                   34ms
+  ├─ [3/4] windows-x64-profile/windows-x64-flutter               2,639ms
+  └─ [4/4] windows-x64-release/windows-x64-flutter               2,440ms
+Resolving dependencies...
+Downloading packages...
+  archive 4.5.0 (4.5.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  cross_file 0.3.5+5 (0.4.0 available)
+  dbus 0.7.15 (0.8.0 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  test_api 0.7.12 (0.7.15 available)
+  vector_math 2.4.0 (2.4.3 available)
+  wakelock_plus 1.8.0 (1.8.1 available)
+Got dependencies!
+8 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Building Windows application...                                 
+CMake Warning (dev) at flutter/ephemeral/.plugin_symlinks/media_kit_libs_windows_video/windows/CMakeLists.txt:90 (add_custom_command):
+  Exactly one of PRE_BUILD, PRE_LINK, or POST_BUILD must be given.  Assuming
+  POST_BUILD to preserve backward compatibility.
+
+  Policy CMP0175 is not set: add_custom_command() rejects invalid arguments.
+  Run "cmake --help-policy CMP0175" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at flutter/ephemeral/.plugin_symlinks/media_kit_libs_windows_video/windows/CMakeLists.txt:126 (add_custom_command):
+  Exactly one of PRE_BUILD, PRE_LINK, or POST_BUILD must be given.  Assuming
+  POST_BUILD to preserve backward compatibility.
+
+  Policy CMP0175 is not set: add_custom_command() rejects invalid arguments.
+  Run "cmake --help-policy CMP0175" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+Building Windows application...                                   167.0s
+√ Built build\windows\x64\runner\Release\huabu_app.exe
+Inno Setup 6 Command-Line Compiler
+Copyright (C) 1997-2026 Jordan Russell. All rights reserved.
+Portions Copyright (C) 2000-2026 Martijn Laan. All rights reserved.
+Portions Copyright (C) 2001-2004 Alex Yackimoff. All rights reserved.
+https://www.innosetup.com
+
+Compiler engine version: Inno Setup 6.7.1
+Non-commercial use only
+
+Preprocessing
+   Reading file: c:\program files (x86)\inno setup 6\ISPPBuiltins.iss
+Parsing [Setup] section, line 3
+Parsing [Setup] section, line 4
+Parsing [Setup] section, line 5
+Parsing [Setup] section, line 6
+Parsing [Setup] section, line 7
+Parsing [Setup] section, line 8
+Parsing [Setup] section, line 9
+Parsing [Setup] section, line 10
+Parsing [Setup] section, line 11
+Parsing [Setup] section, line 12
+Parsing [Setup] section, line 13
+Parsing [Setup] section, line 14
+Parsing [Setup] section, line 15
+Parsing [Setup] section, line 16
+Parsing [Setup] section, line 21
+Parsing [Setup] section, line 22
+Reading file (WizardImageFile)
+Reading file (WizardSmallImageFile)
+Preparing Setup program executable
+   Verification successful
+   Updating icons (Setup.e32)
+   Updating version info (Setup.e32)
+Determining language code pages
+   Reading file: c:\program files (x86)\inno setup 6\Default.isl
+   Messages in script file
+Reading default messages from Default.isl
+Parsing [LangOptions], [Messages], and [CustomMessages] sections
+   Reading file: c:\program files (x86)\inno setup 6\Default.isl
+   Messages in script file
+Reading [Code] section
+Parsing [Icons] section, line 29
+Parsing [Run] section, line 32
+Parsing [Files] section, line 26
+Creating setup files
+   Verification successful
+   Updating icons (Setup.exe)
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\auto_updater_windows_plugin.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\d3dcompiler_47.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\dartjni.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\desktop_drop_plugin.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\file_selector_windows_plugin.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\flutter_secure_storage_windows_plugin.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\flutter_windows.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\huabu_app.exe
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\libEGL.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\libGLESv2.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\libmpv-2.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\media_kit_libs_windows_video_plugin.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\media_kit_video_plugin.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\share_plus_plugin.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\sqlite3.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\url_launcher_windows_plugin.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\vk_swiftshader.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\vulkan-1.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\WinSparkle.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\zlib.dll
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\app.so
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\icudtl.dat
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\AssetManifest.bin
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\FontManifest.json
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\NativeAssetsManifest.json
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\NOTICES.Z
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\assets\branding\app-icon-macos.png
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\assets\branding\app-icon.png
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\assets\branding\README.md
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\assets\branding\studio-chat.png
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\assets\branding\studio-image.png
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\assets\branding\studio-video.png
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\assets\fonts\PlusJakartaSans.ttf
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\fonts\MaterialIcons-Regular.otf
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\packages\forui\assets\fonts\inter\Inter-Italic.ttf
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\packages\forui\assets\fonts\inter\Inter.ttf
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\packages\forui_lucide\assets\lucide.ttf
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\packages\material_ui\shaders\ink_sparkle.frag
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\packages\media_kit\assets\web\hls1.4.10.js
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\packages\wakelock_plus\assets\no_sleep.js
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\shaders\ink_sparkle.frag
+   Compressing: D:\a\huabu-releases\huabu-releases\client\build\windows\x64\runner\Release\data\flutter_assets\shaders\stretch_effect.frag
+   Compressing Setup program executable
+   Updating version info (Setup.exe)
+   Updating manifest (Setup.exe)
+
+
+Successful compile (20.734 sec). Resulting Setup program filename is:
+D:\a\huabu-releases\huabu-releases\client\build\packages\0.1.1+2\windows-x64\huabu-0.1.1+2-windows-x64-setup.exe
+资源包位置: D:\a\huabu-releases\huabu-releases\client\build\packages\0.1.1+2\windows-x64

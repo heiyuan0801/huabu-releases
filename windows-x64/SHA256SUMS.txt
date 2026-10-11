@@ -1,0 +1,2 @@
+b1d356f8cff925544546de56da459347949a44e499bb13b07f5f6c86ab341e2f  huabu-0.1.1+2-windows-x64-setup.exe
+0c3d977b9d204ec17d07237a2c37143bab0222a42928ddc2d7c3df06eed6e55b  huabu-0.1.1+2-windows-x64.zip
