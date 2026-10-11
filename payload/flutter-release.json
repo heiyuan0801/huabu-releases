@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": "0.1.1",
+  "buildNumber": 2,
+  "notes": "未来画布客户端 0.1.1，内部版本 2。\n\n- 注册、邮箱验证、验证码重发与忘记密码接入现有站点接口。\n- 邀请页展示真实奖励规则、邀请记录与积分收益，提供软件下载安装入口。受邀用户注册并验证邮箱后，服务器按当前活动规则发放积分；下载或安装本身不发积分。\n- 支持启动检查新版、更新提示和手动检查。macOS / Windows 接入有签名的桌面更新源；Android 打开 APK 下载后由系统确认安装。\n- 保持桌面侧栏工作区、手机底部导航及明暗主题，使用统一品牌图标。\n\n安装文件：macOS 通用架构 DMG / ZIP；Windows x64 安装 EXE / 完整便携 ZIP；Android 通用 APK、三个按架构 APK 与用于应用市场的 AAB。Android APK / AAB 采用同一固定发行签名，版本码均为 2。AAB 不能直接安装。\n\nmacOS 安装包为 ad hoc 签名，尚未完成 Apple Developer ID 签名与公证；Windows 尚未进行 Authenticode 签名。更新文件另有 Sparkle / WinSparkle 签名并经校验，不能替代操作系统的应用发行身份验证。iOS 已完成未签名 Release 归档编译，但缺少 Apple 分发签名，当前没有可安装 IPA。\n\n客户端静态分析通过，108 项测试通过。真实邮件发送、积分到账、跨版本安装及 Android / Windows / iOS 实机运行仍需验收，不将编译或更新窗口打开视为这些流程已通过。完整文件摘要见 SHA256SUMS。\n",
+  "downloads": {
+    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.1/huabu-0.1.1%2B2-macos.dmg",
+    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.1/huabu-0.1.1%2B2-windows-x64-setup.exe",
+    "android": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.1/huabu-0.1.1%2B2-android-universal.apk"
+  },
+  "appcasts": {
+    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.1/appcast-macos.xml",
+    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.1/appcast-windows.xml"
+  }
+}
