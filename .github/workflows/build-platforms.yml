@@ -1,0 +1,79 @@
+name: Build client platforms
+
+on:
+  push:
+    branches: [main]
+    paths: ['client/**', '.github/workflows/build-platforms.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS Release (ad hoc, unsigned update)
+            runner: macos-15
+            platform: macos
+            command: bash scripts/package-release.sh macos --no-pub
+            artifact: macos-ci-ad-hoc
+            output: client/build/packages/*/macos/*
+          - name: iOS Release (unsigned archive)
+            runner: macos-15
+            platform: ios
+            command: bash scripts/package-release.sh ios --no-pub
+            artifact: ios-ci-unsigned-archive
+            output: client/build/packages/*/ios/*
+          - name: Android Debug (verification only)
+            runner: ubuntu-24.04
+            platform: android
+            command: flutter build apk --debug --no-pub
+            artifact: android-ci-debug-verification-only
+            output: client/build/app/outputs/flutter-apk/app-debug.apk
+    defaults:
+      run:
+        shell: bash
+        working-directory: client
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned Flutter SDK
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git clone --branch 3.47.7 --depth 1 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = abaf9c523780a608bd46686fd5e53740a07077f8
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Select Apple build tools
+        if: runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          test -d /Applications/Xcode_26.3.app/Contents/Developer
+          echo 'DEVELOPER_DIR=/Applications/Xcode_26.3.app/Contents/Developer' >> "$GITHUB_ENV"
+          pod --version
+      - name: Select Java 17
+        if: matrix.platform == 'android'
+        run: |
+          set -euo pipefail
+          test -x "$JAVA_HOME_17_X64/bin/java"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Restore locked dependencies
+        run: |
+          flutter config --no-analytics
+          flutter --version
+          flutter pub get --enforce-lockfile
+      - name: Build package
+        run: ${{ matrix.command }}
+      - name: Store CI artifact (not published to Releases)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.output }}
+          if-no-files-found: error
