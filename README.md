@@ -12,4 +12,6 @@
 
 `Build client platforms` 工作流同时验证 macOS Release、iOS 未签名归档和 Android Debug 编译，仅保存在 Actions 产物中。Android Debug 是测试包，不进入软件下载或更新清单；正式 Android 包和桌面更新签名在持有固定密钥的主机完成，密钥不上传本仓库。
 
-发布时将已验证的安装包、清单、签名 appcast 和 `SHA256SUMS` 放入 `payload/`，更新 `release-notes.md`，提交并推送对应的 `client-v<版本号>` 标签。本仓库的 GitHub Actions 核对文件摘要和版本后，创建公开 Release 并上传真实文件。工作流使用仓库自动提供的 `GITHUB_TOKEN`。超出 Git 单文件限制的安装包在提交时拆分，发布工作流还原并校验后上传完整文件。
+当前版本：[0.1.1 下载与更新文件](https://github.com/heiyuan0801/huabu-releases/releases/tag/client-v0.1.1)。macOS、Windows、iOS 未签名归档和 Android 测试构建已在本仓库 Actions 实际完成；正式 Android 下载包使用固定发行签名。
+
+发布资料放在独立 `codex/client-release/<版本号>` 分支的 `payload/`，更新 `release-notes.md`，提交并推送对应的 `client-v<版本号>` 标签。本仓库的 GitHub Actions 核对文件摘要和版本后，创建公开 Release 并上传真实文件。工作流使用仓库自动提供的 `GITHUB_TOKEN`。超出 Git 单文件限制的安装包在提交时拆分，发布工作流还原并校验后上传完整文件。`main` 保留客户端源码与当前更新资料，发布标签保留完整安装包快照。
