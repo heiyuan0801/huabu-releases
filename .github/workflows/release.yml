@@ -1,0 +1,37 @@
+name: Publish client release
+
+on:
+  push:
+    tags: ['client-v*']
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify payload and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s release-notes.md
+          test -s payload/flutter-release.json
+          test -s payload/SHA256SUMS
+          shopt -s nullglob
+          for first in payload/*.part-aa; do
+            asset=${first%.part-aa}
+            cat "$asset".part-* > "$asset"
+          done
+          version=$(jq -er '.version' payload/flutter-release.json)
+          test "$RELEASE_TAG" = "client-v$version"
+          (cd payload && sha256sum --check SHA256SUMS)
+          assets=(payload/*.dmg payload/*.zip payload/*.exe payload/*.apk payload/*.aab payload/flutter-release.json payload/*.xml payload/SHA256SUMS)
+          gh release create "$RELEASE_TAG" "${assets[@]}" --verify-tag --latest --title "未来画布 $version" --notes-file release-notes.md

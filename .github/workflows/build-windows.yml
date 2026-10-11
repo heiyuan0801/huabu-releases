@@ -1,0 +1,99 @@
+name: Build Windows client
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['client/**', '.github/workflows/build-windows.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: client-build-output
+  cancel-in-progress: false
+
+jobs:
+  windows-x64:
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        id: source
+      - name: Prepare build log
+        run: |
+          New-Item -ItemType Directory -Force client-package-output | Out-Null
+          "Source commit: $env:GITHUB_SHA`nRun: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID" | Set-Content client-package-output/build.log
+      - name: Build Windows x64 bundle and installer
+        working-directory: client
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $LogPath = Join-Path $env:GITHUB_WORKSPACE 'client-package-output/build.log'
+          try {
+            & {
+              if (-not (Test-Path 'windows/runner/resources/update_dsa_pub.pem')) { throw '缺少 WinSparkle 更新公钥。' }
+              $FlutterRoot = Join-Path $env:RUNNER_TEMP 'flutter-sdk'
+              git clone --branch 3.47.7 --depth 1 https://github.com/flutter/flutter.git $FlutterRoot
+              if ($LASTEXITCODE -ne 0) { throw 'Flutter SDK 下载失败。' }
+              $Revision = git -C $FlutterRoot rev-parse HEAD
+              if ($Revision -ne 'abaf9c523780a608bd46686fd5e53740a07077f8') { throw 'Flutter SDK 版本校验失败。' }
+              $env:PATH = "$FlutterRoot\bin;$env:PATH"
+              flutter --version
+              if ($LASTEXITCODE -ne 0) { throw 'Flutter SDK 初始化失败。' }
+              flutter pub get --enforce-lockfile
+              if ($LASTEXITCODE -ne 0) { throw 'Flutter 依赖恢复失败。' }
+              & ./scripts/package-windows.ps1 -Arch x64
+              if (-not (Get-ChildItem 'build/packages/*/windows-x64/*-setup.exe')) { throw '未生成 Windows 安装器。' }
+            } 2>&1 | Tee-Object -FilePath $LogPath -Append
+          } catch {
+            $_ | Out-String | Tee-Object -FilePath $LogPath -Append
+            throw
+          }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: huabu-client-windows-x64-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            client/build/packages/*/windows-x64/*
+            client-package-output/build.log
+          if-no-files-found: error
+      - name: Return build output through Git
+        if: always() && steps.source.outcome == 'success'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $OutputTree = Join-Path $env:RUNNER_TEMP 'client-build-git'
+          $RemoteBranch = git ls-remote --heads origin refs/heads/codex/client-build
+          if ($LASTEXITCODE -ne 0) { throw '输出分支读取失败。' }
+          if ($RemoteBranch) {
+            git fetch origin refs/heads/codex/client-build
+            if ($LASTEXITCODE -ne 0) { throw '输出分支下载失败。' }
+            git worktree add --detach $OutputTree FETCH_HEAD
+          } else {
+            git worktree add --orphan -b codex/client-build $OutputTree
+          }
+          if ($LASTEXITCODE -ne 0) { throw '输出工作区创建失败。' }
+          $OutputDir = Join-Path $OutputTree 'windows-x64'
+          if (Test-Path $OutputDir) { Remove-Item $OutputDir -Recurse -Force }
+          New-Item -ItemType Directory $OutputDir | Out-Null
+          Copy-Item client-package-output/build.log $OutputDir
+          Get-ChildItem 'client/build/packages/*/windows-x64/*' -File -ErrorAction SilentlyContinue | Where-Object {
+            $_.Extension -in '.zip', '.exe' -or $_.Name -eq 'SHA256SUMS.txt'
+          } | ForEach-Object {
+            $TargetFile = Join-Path $OutputDir $_.Name
+            if ($_.Length -le 100MB) {
+              Copy-Item $_.FullName $TargetFile
+            } else {
+              $SplitExe = Join-Path $env:ProgramFiles 'Git/usr/bin/split.exe'
+              & $SplitExe -b 90m $_.FullName "$TargetFile.part-"
+              if ($LASTEXITCODE -ne 0) { throw '安装包传输分片失败。' }
+            }
+          }
+          git -C $OutputTree config user.name 'github-actions[bot]'
+          git -C $OutputTree config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C $OutputTree add -- windows-x64
+          git -C $OutputTree commit -m "Return Windows client build $env:GITHUB_RUN_ID attempt $env:GITHUB_RUN_ATTEMPT"
+          if ($LASTEXITCODE -ne 0) { throw '构建结果提交失败。' }
+          git -C $OutputTree push origin HEAD:refs/heads/codex/client-build
+          if ($LASTEXITCODE -ne 0) { throw '构建结果回传失败。' }
