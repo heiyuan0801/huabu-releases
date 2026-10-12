@@ -191,6 +191,7 @@ void main() {
       expect(find.text(longName), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
+      container.dispose();
       await tester.pumpAndSettle();
     } finally {
       debugDefaultTargetPlatformOverride = null;

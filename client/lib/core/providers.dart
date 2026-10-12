@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'api/api_client.dart';
@@ -18,7 +19,7 @@ export 'api/api_client.dart';
 export 'models.dart';
 
 const apiOrigin = String.fromEnvironment('API_BASE_URL', defaultValue: 'https://image.weilai.chat');
-String errorMessage(Object error) => error is ApiException ? error.message : error is FormatException ? '服务器数据格式异常，请重试' : '操作未完成，请重试';
+String errorMessage(Object error) => error is ApiException ? error.message : error is PlatformException && error.code == 'Unexpected security result code' ? '系统安全存储读取失败，请处理钥匙串授权后重新读取' : error is FormatException ? '服务器数据格式异常，请重试' : '操作未完成，请重试';
 
 final apiProvider = Provider<ApiClient>((ref) {
   final api = ApiClient(baseUrl: '${apiOrigin.replaceFirst(RegExp(r'/+$'), '')}/api');
@@ -34,7 +35,8 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 final repositoryProvider = Provider((ref) => HuabuRepository(ref.watch(apiProvider)));
 final siteProvider = FutureProvider((ref) async => SiteData.fromJson(await ref.watch(apiProvider).get('/site')));
 
-final sessionProvider = AsyncNotifierProvider<SessionController, UserAccount?>(SessionController.new);
+final sessionProvider = AsyncNotifierProvider<SessionController, UserAccount?>(SessionController.new,
+  retry: (count, error) => error is PlatformException ? null : ProviderContainer.defaultRetry(count, error));
 class SessionController extends AsyncNotifier<UserAccount?> {
   static const _storage = FlutterSecureStorage(mOptions: MacOsOptions(usesDataProtectionKeychain: false));
   String get _key => 'huabu_session:${Uri.parse(apiOrigin).origin}';
@@ -96,7 +98,13 @@ class SessionController extends AsyncNotifier<UserAccount?> {
 
   Future<void> verifyEmail(Map<String, dynamic> input, {CancelToken? cancelToken}) => _authenticate('/auth/verify-email', input, cancelToken);
 
-  Future<void> _authenticate(String path, Map<String, dynamic> input, CancelToken? cancelToken) async {
+  Future<void> loginWithQr(String id, {required CancelToken cancelToken}) {
+    if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(id)) throw const ApiException('扫码登录编号无效');
+    final origin = Uri.parse(ref.read(apiProvider).baseUrl).origin;
+    return _authenticate('/auth/wechat-qr/$id/consume', {}, cancelToken, headers: {'X-Huabu-QR-Login': '1', 'Origin': origin}, requireSessionCookie: true);
+  }
+
+  Future<void> _authenticate(String path, Map<String, dynamic> input, CancelToken? cancelToken, {Map<String, dynamic>? headers, bool requireSessionCookie = false}) async {
     try { await ref.read(sessionProvider.future); } catch (_) {}
     if (!ref.mounted || cancelToken?.isCancelled == true) throw const ApiException('登录操作已取消', canceled: true);
     final op = ++_operation;
@@ -105,8 +113,10 @@ class SessionController extends AsyncNotifier<UserAccount?> {
       api.assertEpoch(scope);
       if (!ref.mounted || op != _operation || cancelToken?.isCancelled == true) throw const ApiException('登录操作已取消', canceled: true);
     }
-    final response = cancelToken == null ? await api.post(path, input) : (await api.request(path, method: 'POST', body: input, cancelToken: cancelToken)).data;
+    final request = cancelToken == null ? null : await api.request(path, method: 'POST', body: input, headers: headers, cancelToken: cancelToken);
+    final response = request == null ? await api.post(path, input, headers) : request.data;
     check(epoch);
+    if (requireSessionCookie && !(request?.headers[HttpHeaders.setCookieHeader] ?? []).any((value) => Cookie.fromSetCookieValue(value).name == 'huabu_session')) throw const ApiException('服务器没有设置登录会话，请联系管理员');
     final value = response is String ? jsonDecode(response) : response;
     if (value is! Map) throw const ApiException('服务器账号数据格式异常，登录未完成');
     final user = UserAccount.fromJson(jsonObject(value));

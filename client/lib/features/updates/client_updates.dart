@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/api/api_client.dart';
 
 const updateManifestUrl = String.fromEnvironment('APP_UPDATE_MANIFEST_URL', defaultValue: 'https://github.com/heiyuan0801/huabu-releases/releases/latest/download/flutter-release.json');
+const releaseHistoryUrl = 'https://github.com/heiyuan0801/huabu-releases/releases';
 final packageInfoProvider = FutureProvider((ref) => PackageInfo.fromPlatform());
 
 String get clientPlatform => switch (defaultTargetPlatform) {
@@ -80,9 +81,9 @@ final nativeUpdateReadyProvider = FutureProvider<bool>((ref) async {
 });
 
 class NativeUpdateState {
-  const NativeUpdateState({this.message = '', this.error = false});
+  const NativeUpdateState({this.message = '', this.error = false, this.busy = false});
   final String message;
-  final bool error;
+  final bool error, busy;
 }
 
 final nativeUpdateProvider = NotifierProvider<NativeUpdateController, NativeUpdateState>(NativeUpdateController.new);
@@ -101,14 +102,17 @@ class NativeUpdateController extends Notifier<NativeUpdateState> with UpdaterLis
       if (!await ref.read(nativeUpdateReadyProvider.future)) throw const ApiException('当前安装包尚未配置更新签名，请使用下载入口');
       if (!ref.mounted) return;
       if (!_listening) { autoUpdater.addListener(this); _listening = true; }
-      state = const NativeUpdateState(message: '正在打开系统更新窗口…');
+      state = const NativeUpdateState(message: '正在打开系统更新窗口…', busy: true);
       await autoUpdater.setFeedURL(feed.toString());
       if (ref.mounted) await autoUpdater.checkForUpdates(inBackground: false);
     } catch (error) {
       if (ref.mounted) state = NativeUpdateState(message: error is ApiException ? error.message : '更新窗口未能打开，请重试', error: true);
-    } finally { _opening = false; }
+    } finally {
+      _opening = false;
+      if (ref.mounted && state.busy) state = NativeUpdateState(message: state.message, error: state.error);
+    }
   }
-  void _status(String message, {bool error = false}) { if (ref.mounted) state = NativeUpdateState(message: message, error: error); }
+  void _status(String message, {bool error = false}) { if (ref.mounted) state = NativeUpdateState(message: message, error: error, busy: _opening); }
   @override
   void onUpdaterError(UpdaterError? error) => _status(error?.message ?? '更新未完成，请重试', error: true);
   @override

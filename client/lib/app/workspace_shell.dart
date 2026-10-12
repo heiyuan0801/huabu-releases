@@ -114,7 +114,11 @@ class _WorkspaceShellState extends ConsumerState<WorkspaceShell> {
                 bottom: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 10, 16, 6),
-                  child: Row(children: [const Expanded(child: _Brand(compact: true)), const _ThemeToggle()]),
+                  child: Row(children: [
+                    const Expanded(child: _Brand(compact: true)),
+                    FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '扫码登录', semanticsTooltip: '扫码登录网页或桌面客户端', onPress: () => context.push('/web-login'), child: const Icon(FLucideIcons.scanLine, size: 18)),
+                    const _ThemeToggle(),
+                  ]),
                 ),
               ),
         footer: desktop
@@ -210,6 +214,7 @@ class _AccountSummary extends ConsumerWidget {
           loading: () => const FCircularProgress(),
           error: (_, _) => FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '重新读取账号', onPress: () => ref.invalidate(sessionProvider), child: const Icon(FLucideIcons.refreshCw, size: 16)),
         ),
+        const SoftwareUpdateButton(),
       ]);
     }
     return Column(
@@ -247,39 +252,38 @@ class _AccountSummary extends ConsumerWidget {
               ),
             ),
           ),
-        session.when(
+        Row(spacing: AppSpace.xs, children: [Expanded(child: session.when(
           data: (user) => FButton.raw(
             variant: FButtonVariant.ghost,
             onPress: () => context.go(user == null ? '/login' : '/settings'),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
               child: Row(
-                spacing: 12,
+                spacing: AppSpace.sm,
                 children: [
-                  FAvatar.raw(size: 34, child: const Icon(FLucideIcons.userRound, size: 16)),
+                  FAvatar.raw(size: 30, child: const Icon(FLucideIcons.userRound, size: 16)),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 3,
                       children: [
                         Text(user?.displayName ?? '登录创作', overflow: TextOverflow.ellipsis, style: typography.body.sm.copyWith(fontWeight: FontWeight.w600)),
-                        Text(user == null ? '同步作品与个人配置' : '个人创作空间', style: typography.body.xs.copyWith(color: colors.mutedForeground)),
+                        Text(user == null ? '同步作品与个人配置' : '个人创作空间', maxLines: 1, overflow: TextOverflow.ellipsis, style: typography.body.xs.copyWith(color: colors.mutedForeground)),
                       ],
                     ),
                   ),
-                  Icon(FLucideIcons.chevronRight, size: 14, color: colors.mutedForeground),
                 ],
               ),
             ),
           ),
-          loading: () => const Row(spacing: 12, children: [FCircularProgress(), Text('正在读取账号…')]),
+          loading: () => const Row(spacing: AppSpace.sm, children: [SizedBox(width: 16, height: 16, child: FCircularProgress()), Expanded(child: Text('正在读取账号…', maxLines: 1, overflow: TextOverflow.ellipsis))]),
           error: (_, _) => FButton(
             variant: FButtonVariant.ghost,
             prefix: const Icon(FLucideIcons.refreshCw, size: 16),
             onPress: () => ref.invalidate(sessionProvider),
-            child: const Text('账号读取失败，重试'),
+            child: const Text('账号读取失败，重试', maxLines: 2, overflow: TextOverflow.ellipsis),
           ),
-        ),
+        )), const SoftwareUpdateButton()]),
       ],
     );
   }

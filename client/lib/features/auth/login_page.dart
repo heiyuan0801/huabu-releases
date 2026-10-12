@@ -7,8 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/providers.dart';
+import '../../core/theme.dart';
 import '../affiliate/affiliate_providers.dart';
 import 'auth_repository.dart';
+import 'desktop_qr_login.dart';
+import 'desktop_qr_repository.dart';
 
 export 'auth_repository.dart' show AuthMode, AuthNotice;
 
@@ -30,6 +33,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _inviteCode = TextEditingController();
   CancelToken _pageToken = CancelToken();
   late AuthMode _mode;
+  DesktopQrMode? _qrMode;
   bool _verifying = false, _acceptTerms = false, _passwordMode = false, _busy = false, _sending = false, _captchaLoading = false;
   String _captchaId = '';
   Uint8List? _captchaImage;
@@ -60,6 +64,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _captchaRequest++;
       _operation++;
       _mode = widget.mode;
+      _qrMode = null;
       _verifying = _acceptTerms = _passwordMode = _busy = _sending = false;
       _error = _message = null;
       _email.text = widget.initialEmail;
@@ -218,6 +223,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _operation++;
     setState(() {
       _mode = mode;
+      _qrMode = null;
       _verifying = verify;
       _acceptTerms = _passwordMode = false;
       _error = _message = null;
@@ -262,6 +268,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 20, children: [
         Text(title, style: theme.typography.display.xl.copyWith(fontSize: 34, fontWeight: FontWeight.w600, letterSpacing: -1)),
         Text(description, style: theme.typography.body.md.copyWith(color: theme.colors.mutedForeground)),
+        if (_mode == AuthMode.login && !_verifying && AppLayout.isDesktop) ...[
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            FButton(variant: _qrMode == null ? FButtonVariant.secondary : FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, onPress: _locked ? null : () => setState(() { _qrMode = null; _error = _message = null; }), child: const Text('账号登录')),
+            FButton(variant: _qrMode == DesktopQrMode.app ? FButtonVariant.secondary : FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, prefix: const Icon(FLucideIcons.qrCode, size: 15), onPress: _locked || !site.appQrLogin ? null : () => setState(() { _qrMode = DesktopQrMode.app; _error = _message = null; }), child: const Text('手机 App 扫码')),
+            if (site.wechatLogin) FButton(variant: _qrMode == DesktopQrMode.wechat ? FButtonVariant.secondary : FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, onPress: _locked ? null : () => setState(() { _qrMode = DesktopQrMode.wechat; _error = _message = null; }), child: const Text('小程序扫码')),
+          ]),
+          if (!site.appQrLogin) Text('当前服务器尚未支持 App 扫码，可使用账号${site.wechatLogin ? '或小程序扫码' : ''}登录。', style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground)),
+        ],
+        if (_qrMode != null && _mode == AuthMode.login && !_verifying && AppLayout.isDesktop)
+          DesktopQrLogin(mode: _qrMode!, onBusyChange: (value) { if (mounted) setState(() => _busy = value); }, onLoggedIn: () { if (mounted) context.go('/explore'); })
+        else ...[
         if (_mode == AuthMode.login && !_verifying && site.emailCodeLogin)
           Row(spacing: 8, children: [
             Expanded(child: FButton(variant: !usePassword ? FButtonVariant.secondary : FButtonVariant.ghost, onPress: _locked ? null : () => setState(() { _passwordMode = false; _error = _message = null; }), child: const Text('邮箱验证码'))),
@@ -296,6 +313,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         if (_error != null) FAlert(variant: FAlertVariant.destructive, icon: const Icon(FLucideIcons.circleAlert), title: const Text('操作未完成'), subtitle: Text(_error!)),
         if (_message != null) FAlert(icon: const Icon(FLucideIcons.mailCheck), title: Text(_mode == AuthMode.login && !_verifying ? '账号提示' : '请查看邮箱'), subtitle: Text(_message!)),
         FButton(size: FButtonSizeVariant.lg, prefix: _busy ? const FCircularProgress() : null, suffix: _busy ? null : const Icon(FLucideIcons.arrowRight, size: 18), onPress: _locked || _captchaLoading || mailUnavailable ? null : () => _submit(site), child: Text(_busy ? '正在处理' : submitLabel)),
+        ],
         Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 8, children: [
           if (_mode == AuthMode.login && !_verifying) ...[
             FButton(variant: FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, onPress: _locked ? null : () => _changeMode(AuthMode.register, site), child: const Text('注册账号')),

@@ -200,6 +200,92 @@ void main() {
     } finally { debugDefaultTargetPlatformOverride = null; }
   });
 
+  testWidgets('头像更新入口仅对确认的新版本显示红点', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    try {
+      for (final build in [2, 3, 4]) {
+        final container = _container(release: ClientRelease.fromJson(_manifest(build: build)));
+        await tester.pumpWidget(_app(container, const SoftwareUpdateButton()));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('software-update-dot')), build > 3 ? findsOneWidget : findsNothing);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpAndSettle();
+      }
+    } finally { debugDefaultTargetPlatformOverride = null; }
+  });
+
+  testWidgets('头像更新按钮主动重查并展示日志，不直接启动安装器', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    var reads = 0, nativeCalls = 0;
+    const updater = MethodChannel('dev.leanflutter.plugins/auto_updater');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(updater, (_) async { nativeCalls++; return null; });
+    addTearDown(() => messenger.setMockMethodCallHandler(updater, null));
+    try {
+      final manifest = _manifest()..['notes'] = '## 创作体验\n\n- 修复创作工作区并改善更新提示';
+      final container = _container(ready: true, load: () async { reads++; return ClientRelease.fromJson(manifest); });
+      await tester.pumpWidget(_app(container, const SoftwareUpdateButton()));
+      await tester.pumpAndSettle();
+      expect(reads, 1);
+      await tester.tap(find.byIcon(FLucideIcons.download));
+      await tester.pumpAndSettle();
+      expect(reads, 2);
+      expect(find.byType(FDialog), findsOneWidget);
+      expect(find.text('当前版本 1.2.3 · 3'), findsOneWidget);
+      expect(find.text('更新日志 · 1.2.3'), findsOneWidget);
+      expect(find.text('创作体验', findRichText: true), findsOneWidget);
+      expect(find.text('修复创作工作区并改善更新提示', findRichText: true), findsOneWidget);
+      expect(find.text('查看历史更新日志'), findsOneWidget);
+      expect(find.text('更新并安装'), findsOneWidget);
+      expect(nativeCalls, 0);
+      expect(container.read(nativeUpdateProvider).message, isEmpty);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byIcon(FLucideIcons.x));
+      await tester.pumpAndSettle();
+      expect(find.byType(FDialog), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    } finally { debugDefaultTargetPlatformOverride = null; }
+  });
+
+  testWidgets('窄桌面大字号下更新弹窗和提醒均可等待签名状态', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(300, 620);
+    final readiness = Completer<bool>();
+    final container = ProviderContainer.test(overrides: [
+      packageInfoProvider.overrideWith((ref) async => _installed()),
+      clientReleaseProvider.overrideWith((ref) async => ClientRelease.fromJson(_manifest())),
+      nativeUpdateReadyProvider.overrideWith((ref) => readiness.future),
+    ]);
+    try {
+      await tester.pumpWidget(_app(container, const Column(children: [UpdateNotice(), SoftwareUpdateButton()]), scale: 1.8));
+      await tester.pump();
+      expect(find.text('正在确认更新方式…'), findsOneWidget);
+      await tester.tap(find.descendant(of: find.byType(SoftwareUpdateButton), matching: find.byIcon(FLucideIcons.download)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(FDialog), findsOneWidget);
+      expect(find.text('正在确认更新方式…'), findsNWidgets(2));
+      expect(tester.takeException(), isNull);
+      readiness.complete(true);
+      await tester.pumpAndSettle();
+      expect(find.text('更新并安装'), findsNWidgets(2));
+      expect(find.text('查看历史更新日志'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byIcon(FLucideIcons.x));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    } finally {
+      if (!readiness.isCompleted) readiness.complete(false);
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    }
+  });
+
   for (final platform in [TargetPlatform.iOS, TargetPlatform.android, TargetPlatform.windows, TargetPlatform.macOS]) {
     testWidgets('${platform.name} 更新控件大字号响应式与签名降级', (tester) async {
       debugDefaultTargetPlatformOverride = platform;

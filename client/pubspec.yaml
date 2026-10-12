@@ -1,7 +1,7 @@
 name: huabu_app
 description: 未来画布跨平台创作客户端
 publish_to: none
-version: 0.1.1+2
+version: 0.1.2+3
 
 environment:
   sdk: ^3.13.0
@@ -41,6 +41,8 @@ dependencies:
   url_launcher: ^6.3.3
   auto_updater: ^1.0.0
   pub_semver: ^2.2.0
+  mobile_scanner: 7.4.2
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

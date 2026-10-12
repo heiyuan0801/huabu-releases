@@ -24,6 +24,7 @@ import '../features/community/community_page.dart';
 import '../features/video/video_page.dart';
 import '../features/video/video_detail_page.dart';
 import '../features/video/video_repository.dart';
+import '../features/web_login/web_login_page.dart';
 import 'workspace_shell.dart';
 
 final routerProvider = Provider((ref) {
@@ -33,6 +34,7 @@ final routerProvider = Provider((ref) {
     GoRoute(path: '/register', builder: (_, state) => LoginPage(mode: AuthMode.register, inviteCode: state.uri.queryParameters['ref'] ?? '')),
     GoRoute(path: '/forgot-password', builder: (_, state) => LoginPage(mode: AuthMode.reset, initialEmail: state.uri.queryParameters['email'] ?? '')),
     GoRoute(path: '/tasks', redirect: (_, _) => '/works?tab=tasks'),
+    GoRoute(path: '/web-login', builder: (_, _) => const FScaffold(child: SafeArea(child: AccountGate(child: WebLoginPage())))),
     GoRoute(path: '/work', builder: (_, state) => state.extra is Artwork
       ? ArtworkDetailPage(artwork: state.extra as Artwork)
       : const FScaffold(child: StatePanel(title: '请从作品列表打开作品'))),

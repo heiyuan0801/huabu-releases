@@ -18,14 +18,14 @@ class UserAccount {
 }
 
 class SiteData {
-  const SiteData({required this.siteName, required this.terms, required this.privacy, required this.emailCodeLogin, required this.captchaEnabled, required this.emailConfigured, required this.content});
+  const SiteData({required this.siteName, required this.terms, required this.privacy, required this.emailCodeLogin, required this.captchaEnabled, required this.emailConfigured, required this.content, this.appQrLogin = false, this.wechatLogin = false});
   factory SiteData.fromJson(Json json) {
     final site = jsonObject(json['site']);
     final auth = jsonObject(json['auth']);
-    return SiteData(siteName: jsonString(site['siteName']), terms: jsonString(site['terms']), privacy: jsonString(site['privacy']), emailCodeLogin: auth['emailCodeLogin'] == true, captchaEnabled: auth['captchaEnabled'] == true, emailConfigured: json['emailConfigured'] == true, content: (json['content'] as List? ?? []).map((item) => Artwork.fromHomeJson(jsonObject(item))).toList());
+    return SiteData(siteName: jsonString(site['siteName']), terms: jsonString(site['terms']), privacy: jsonString(site['privacy']), emailCodeLogin: auth['emailCodeLogin'] == true, captchaEnabled: auth['captchaEnabled'] == true, emailConfigured: json['emailConfigured'] == true, content: (json['content'] as List? ?? []).map((item) => Artwork.fromHomeJson(jsonObject(item))).toList(), appQrLogin: auth['appQrLogin'] == true, wechatLogin: auth['wechatLogin'] == true);
   }
   final String siteName, terms, privacy;
-  final bool emailCodeLogin, captchaEnabled, emailConfigured;
+  final bool emailCodeLogin, captchaEnabled, emailConfigured, appQrLogin, wechatLogin;
   final List<Artwork> content;
 }
 

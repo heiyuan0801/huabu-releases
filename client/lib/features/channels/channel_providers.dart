@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/providers.dart';
 
@@ -57,7 +58,8 @@ Future<ModelApiTarget> resolveModelValueApiTarget(ApiClient api, String value) a
   return ModelApiTarget(api, ImageModel(id: value, providerId: provider, providerName: '', model: name, displayName: name, apiFormat: 'openai', capability: 'image', creditCost: 0, value: value));
 }
 
-final localChannelsProvider = AsyncNotifierProvider<LocalChannelsController, List<LocalChannel>>(LocalChannelsController.new);
+final localChannelsProvider = AsyncNotifierProvider<LocalChannelsController, List<LocalChannel>>(LocalChannelsController.new,
+  retry: (count, error) => error is PlatformException ? null : ProviderContainer.defaultRetry(count, error));
 class LocalChannelsController extends AsyncNotifier<List<LocalChannel>> {
   late String _key;
   Future<void> _writes = Future.value();
