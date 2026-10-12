@@ -2,25 +2,27 @@
 <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
   <channel>
     <title>未来画布</title>
-    <link>https://github.com/heiyuan0801/huabu-releases/releases/tag/client-v0.1.1</link>
+    <link>https://github.com/heiyuan0801/huabu-releases/releases/tag/client-v0.1.2</link>
     <item>
-      <title>未来画布 0.1.1</title>
-      <description sparkle:format="plain-text">未来画布客户端 0.1.1，内部版本 2。
+      <title>未来画布 0.1.2</title>
+      <description sparkle:format="plain-text"># 未来画布 0.1.2
 
-- 注册、邮箱验证、验证码重发与忘记密码接入现有站点接口。
-- 邀请页展示真实奖励规则、邀请记录与积分收益，提供软件下载安装入口。受邀用户注册并验证邮箱后，服务器按当前活动规则发放积分；下载或安装本身不发积分。
-- 支持启动检查新版、更新提示和手动检查。macOS / Windows 接入有签名的桌面更新源；Android 打开 APK 下载后由系统确认安装。
-- 保持桌面侧栏工作区、手机底部导航及明暗主题，使用统一品牌图标。
+- macOS / Windows 登录页支持手机 App 扫码；站点启用微信登录时，也可用小程序扫码。扫描后需在手机明确确认，账号会话保存到系统安全存储。
+- 桌面头像旁新增下载与检查更新入口，新版本显示红点，可查看更新日志并启动签名更新流程。
+- 手机顶部新增扫码入口，可登录本站网页或桌面客户端，支持确认、拒绝和错误后的状态查询。
+- 系统安全存储拒绝授权时不再自动重复读取，保留错误与手动重试入口。
 
-安装文件：macOS 通用架构 DMG / ZIP；Windows x64 安装 EXE / 完整便携 ZIP；Android 通用 APK、三个按架构 APK 与用于应用市场的 AAB。Android APK / AAB 采用同一固定发行签名，版本码均为 2。AAB 不能直接安装。
+Flutter 客户端版本 0.1.2，构建号 3。148 项 Flutter 测试通过，包含手机与桌面扫码、账号流程和更新控件。
 
-macOS 安装包为 ad hoc 签名，尚未完成 Apple Developer ID 签名与公证；Windows 尚未进行 Authenticode 签名。更新文件另有 Sparkle / WinSparkle 签名并经校验，不能替代操作系统的应用发行身份验证。iOS 已完成未签名 Release 归档编译，但缺少 Apple 分发签名，当前没有可安装 IPA。
+下载说明：macOS 提供 DMG / ZIP，Windows 提供 x64 安装器 / 完整便携 ZIP，Android 提供长期发行签名的通用及分架构 APK / AAB。iOS 文件为未签名 xcarchive，仅供开发者在 Xcode 签名导出，不能直接安装。
 
-客户端静态分析通过，108 项测试通过。真实邮件发送、积分到账、跨版本安装及 Android / Windows / iOS 实机运行仍需验收，不将编译或更新窗口打开视为这些流程已通过。完整文件摘要见 SHA256SUMS。
+macOS 仍为 ad-hoc 签名且尚未完成 Apple 公证，Windows 尚未配置 Authenticode；系统可能要求确认来源。Sparkle / WinSparkle 更新签名与发行身份签名是不同环节。
+
+扫码功能需要站点部署本次 App 二维码协议。下载或安装本身不发积分，邀请积分仍由服务端在注册并验证邮箱后按真实活动规则结算。
 </description>
-      <sparkle:version>2</sparkle:version>
-      <sparkle:shortVersionString>0.1.1</sparkle:shortVersionString>
-      <enclosure url="https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.1/huabu-0.1.1%2B2-macos.zip" length="50942749" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="v7NQnzIG14+jLbIR1Lt5rskBYwFSLAmPMlbjgpcynKRqqJtxJlw6FcVQiHJ9KQulK1J/yI9hyI6tLqOL/tlcAQ==" />
+      <sparkle:version>3</sparkle:version>
+      <sparkle:shortVersionString>0.1.2</sparkle:shortVersionString>
+      <enclosure url="https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.2/huabu-0.1.2%2B3-macos.zip" length="51186863" type="application/octet-stream" sparkle:os="macos" sparkle:edSignature="Ss/JlpyKVgZKmARgbwyXBrNR1S3tdqTdWlwL3BJ960146izMnzeQ536hdAGG0YB8quS2dkKdhYnb9wM+wGF/DQ==" />
     </item>
   </channel>
 </rss>
