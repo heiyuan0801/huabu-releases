@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
@@ -18,7 +17,7 @@ import '../features/channels/channel_providers.dart';
 export 'api/api_client.dart';
 export 'models.dart';
 
-const apiOrigin = String.fromEnvironment('API_BASE_URL', defaultValue: 'https://image.weilai.chat');
+const apiOrigin = String.fromEnvironment('API_BASE_URL', defaultValue: 'https://image.iyuns.com');
 String errorMessage(Object error) => error is ApiException ? error.message : error is PlatformException && error.code == 'Unexpected security result code' ? '系统安全存储读取失败，请处理钥匙串授权后重新读取' : error is FormatException ? '服务器数据格式异常，请重试' : '操作未完成，请重试';
 
 final apiProvider = Provider<ApiClient>((ref) {

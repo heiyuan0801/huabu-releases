@@ -8,7 +8,7 @@ import 'package:mime/mime.dart';
 
 import '../models.dart';
 
-const defaultApiBaseUrl = 'https://image.weilai.chat/api';
+const defaultApiBaseUrl = 'https://image.iyuns.com/api';
 
 class ApiException implements Exception {
   const ApiException(this.message, {this.status = 0, this.canceled = false, this.verificationRequired = false});
