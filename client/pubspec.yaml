@@ -1,7 +1,7 @@
 name: huabu_app
 description: 未来画布跨平台创作客户端
 publish_to: none
-version: 0.1.3+4
+version: 0.1.4+5
 
 environment:
   sdk: ^3.13.0

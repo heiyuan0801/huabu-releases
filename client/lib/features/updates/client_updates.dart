@@ -80,15 +80,20 @@ final nativeUpdateReadyProvider = FutureProvider<bool>((ref) async {
   return await const MethodChannel('chat.weilai.huabu/window').invokeMethod<bool>('hasUpdateKey') ?? false;
 });
 
+enum NativeUpdateStage { idle, opening, checking, available, downloaded, beforeQuit, noUpdate, error }
+
 class NativeUpdateState {
-  const NativeUpdateState({this.message = '', this.error = false, this.busy = false});
+  const NativeUpdateState({this.message = '', this.error = false, this.busy = false, this.stage = NativeUpdateStage.idle, this.feed});
   final String message;
   final bool error, busy;
+  final NativeUpdateStage stage;
+  final Uri? feed;
 }
 
 final nativeUpdateProvider = NotifierProvider<NativeUpdateController, NativeUpdateState>(NativeUpdateController.new);
 class NativeUpdateController extends Notifier<NativeUpdateState> with UpdaterListener {
   bool _listening = false, _opening = false;
+  Uri? _feed;
   @override
   NativeUpdateState build() {
     ref.onDispose(() { if (_listening) autoUpdater.removeListener(this); });
@@ -99,30 +104,31 @@ class NativeUpdateController extends Notifier<NativeUpdateState> with UpdaterLis
     _opening = true;
     try {
       releaseUri(feed.toString());
+      _feed = feed;
       if (!await ref.read(nativeUpdateReadyProvider.future)) throw const ApiException('当前安装包尚未配置更新签名，请使用下载入口');
       if (!ref.mounted) return;
       if (!_listening) { autoUpdater.addListener(this); _listening = true; }
-      state = const NativeUpdateState(message: '正在打开系统更新窗口…', busy: true);
+      state = NativeUpdateState(message: '正在打开系统更新窗口…', busy: true, stage: NativeUpdateStage.opening, feed: feed);
       await autoUpdater.setFeedURL(feed.toString());
       if (ref.mounted) await autoUpdater.checkForUpdates(inBackground: false);
     } catch (error) {
-      if (ref.mounted) state = NativeUpdateState(message: error is ApiException ? error.message : '更新窗口未能打开，请重试', error: true);
+      if (ref.mounted) state = NativeUpdateState(message: error is ApiException ? error.message : '更新窗口未能打开，请重试', error: true, stage: NativeUpdateStage.error, feed: _feed);
     } finally {
       _opening = false;
-      if (ref.mounted && state.busy) state = NativeUpdateState(message: state.message, error: state.error);
+      if (ref.mounted && state.busy) state = NativeUpdateState(message: state.message, error: state.error, stage: state.stage, feed: state.feed);
     }
   }
-  void _status(String message, {bool error = false}) { if (ref.mounted) state = NativeUpdateState(message: message, error: error, busy: _opening); }
+  void _status(String message, NativeUpdateStage stage, {bool error = false}) { if (ref.mounted) state = NativeUpdateState(message: message, error: error, busy: _opening, stage: stage, feed: _feed); }
   @override
-  void onUpdaterError(UpdaterError? error) => _status(error?.message ?? '更新未完成，请重试', error: true);
+  void onUpdaterError(UpdaterError? error) => _status(error?.message ?? '更新未完成，请重试', NativeUpdateStage.error, error: true);
   @override
-  void onUpdaterCheckingForUpdate(Appcast? appcast) => _status('系统更新窗口正在检查版本');
+  void onUpdaterCheckingForUpdate(Appcast? appcast) => _status('系统更新窗口正在检查版本', NativeUpdateStage.checking);
   @override
-  void onUpdaterUpdateAvailable(AppcastItem? item) => _status('发现可用更新，请在系统窗口中确认下载安装');
+  void onUpdaterUpdateAvailable(AppcastItem? item) => _status('发现可用更新，请在系统窗口中确认下载安装', NativeUpdateStage.available);
   @override
-  void onUpdaterUpdateNotAvailable(UpdaterError? error) => error == null ? _status('更新源未发现适用于本机的新版本') : onUpdaterError(error);
+  void onUpdaterUpdateNotAvailable(UpdaterError? error) => error == null ? _status('更新源未发现适用于本机的新版本', NativeUpdateStage.noUpdate) : onUpdaterError(error);
   @override
-  void onUpdaterUpdateDownloaded(AppcastItem? item) => _status('更新包已下载，请在系统窗口中确认安装');
+  void onUpdaterUpdateDownloaded(AppcastItem? item) => _status('更新包已下载，请在系统窗口中确认安装', NativeUpdateStage.downloaded);
   @override
-  void onUpdaterBeforeQuitForUpdate(AppcastItem? item) => _status('更新已准备安装，请按系统窗口提示完成安装');
+  void onUpdaterBeforeQuitForUpdate(AppcastItem? item) => _status('更新已准备安装，请按系统窗口提示完成安装', NativeUpdateStage.beforeQuit);
 }

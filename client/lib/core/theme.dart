@@ -40,6 +40,10 @@ abstract final class AppTheme {
   static const creativeGradient = LinearGradient(colors: [blue, accent], begin: Alignment.centerLeft, end: Alignment.centerRight);
   static const imageOverlay = LinearGradient(colors: [Color(0x000B0D14), Color(0xE60B0D14)], begin: Alignment.topCenter, end: Alignment.bottomCenter);
   static const imageForeground = Color(0xFFFFFFFF);
+  static const updateBlue = Color(0xFF176BFF);
+  static const updateGradient = LinearGradient(colors: [Color(0xFF2C9EFF), Color(0xFF075AFF)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+  static const updateDesktopTitleSize = 30.0;
+  static const updateMobileTitleSize = 23.0;
   static const studioColors = [cyan, accent, Color(0xFFF59B78), Color(0xFF72CC9E)];
   static const studioForeground = Color(0xFF191C22);
   static final _lightTouch = _create(false, true);
@@ -49,6 +53,33 @@ abstract final class AppTheme {
 
   static FThemeData light({required bool touch}) => touch ? _lightTouch : _lightDesktop;
   static FThemeData dark({required bool touch}) => touch ? _darkTouch : _darkDesktop;
+
+  static FThemeData softwareUpdates(FThemeData base) {
+    final colors = base.colors.copyWith(primary: updateBlue, primaryForeground: imageForeground,
+      secondary: Color.alphaBlend(updateBlue.withValues(alpha: .08), base.colors.card), secondaryForeground: base.colors.foreground);
+    final buttons = FButtonStyles.inherit(colors: colors, typography: base.typography, style: base.style, touch: !AppLayout.isDesktop);
+    final primary = FButtonSizeStyles.inherit(typography: base.typography, style: base.style, touch: !AppLayout.isDesktop,
+      foregroundColor: colors.primaryForeground, disabledForegroundColor: colors.disable(colors.primaryForeground),
+      decoration: (radius) => FVariants(ShapeDecoration(shape: RoundedSuperellipseBorder(borderRadius: radius), gradient: updateGradient), variants: {
+        [FTappableVariant.hovered, FTappableVariant.pressed]: ShapeDecoration(shape: RoundedSuperellipseBorder(borderRadius: radius), gradient: updateGradient, shadows: [BoxShadow(color: updateBlue.withValues(alpha: .2), blurRadius: 12)]),
+        [FTappableVariant.disabled]: ShapeDecoration(shape: RoundedSuperellipseBorder(borderRadius: radius), color: colors.disable(updateBlue)),
+      }));
+    final track = BoxDecoration(color: updateBlue.withValues(alpha: .1), borderRadius: BorderRadius.circular(AppRadius.xl));
+    const fill = BoxDecoration(gradient: updateGradient, borderRadius: BorderRadius.all(Radius.circular(AppRadius.xl)));
+    return FThemeData(colors: colors, touch: !AppLayout.isDesktop, typography: base.typography, icons: base.icons, style: base.style,
+      cardStyle: base.cardStyle, dialogRouteStyle: base.dialogRouteStyle,
+      buttonStyles: FVariants(primary, variants: {
+        [FButtonVariant.primary]: primary, [FButtonVariant.secondary]: buttons.secondary,
+        [FButtonVariant.destructive]: buttons.destructive, [FButtonVariant.outline]: buttons.outline, [FButtonVariant.ghost]: buttons.ghost,
+      }),
+      dialogStyle: base.dialogStyle.copyWith(insetPadding: const EdgeInsetsGeometryDelta.value(EdgeInsets.all(AppSpace.lg)), decoration: DecorationDelta.value(BoxDecoration(
+        color: Color.alphaBlend(updateBlue.withValues(alpha: .025), colors.card), borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: colors.border), boxShadow: [BoxShadow(color: colors.foreground.withValues(alpha: .12), blurRadius: 48, offset: const Offset(0, 16))],
+      ))),
+      progressStyle: base.progressStyle.copyWith(trackDecoration: DecorationDelta.value(track), fillDecoration: const DecorationDelta.value(fill), constraints: const BoxConstraints.tightFor(height: 10)),
+      determinateProgressStyle: base.determinateProgressStyle.copyWith(trackDecoration: DecorationDelta.value(track), fillDecoration: const DecorationDelta.value(fill), constraints: const BoxConstraints.tightFor(height: 10)),
+    );
+  }
 
   static FThemeData _create(bool dark, bool touch) {
     final colors = dark

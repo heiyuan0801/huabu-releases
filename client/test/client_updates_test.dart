@@ -295,7 +295,8 @@ void main() {
         final container = _container(release: ClientRelease.fromJson(_manifest()));
         await tester.pumpWidget(_app(container, const Column(spacing: 12, children: [UpdateNotice(), SoftwareUpdateCard(), ReleaseDownloads()]), scale: 1.8));
         await tester.pumpAndSettle();
-        expect(find.text('发现新版本 1.2.3 · 4'), findsOneWidget);
+        expect(find.text('发现新版本'), findsOneWidget);
+        expect(find.text('最新版本 1.2.3 · 4'), findsOneWidget);
         expect(find.text(platform == TargetPlatform.iOS ? '前往安装渠道更新' : '下载新版本'), findsNWidgets(2));
         expect(find.text('更新并安装'), findsNothing);
         expect(find.text('macOS'), findsOneWidget);
@@ -352,7 +353,8 @@ void main() {
     await tester.tap(find.text('重新读取'));
     await tester.pumpAndSettle();
     expect(calls, 2);
-    expect(find.text('发现新版本 1.2.3 · 4'), findsOneWidget);
+    expect(find.text('发现新版本'), findsOneWidget);
+    expect(find.text('最新版本 1.2.3 · 4'), findsOneWidget);
     expect(find.text('软件更新信息读取失败'), findsNothing);
     expect(tester.takeException(), isNull);
   });
