@@ -1,0 +1,10 @@
+[Unit]
+Description=Check Huabu client releases every five minutes
+
+[Timer]
+OnCalendar=*-*-* *:0/5:00
+Persistent=true
+Unit=huabu-client-updates.service
+
+[Install]
+WantedBy=timers.target

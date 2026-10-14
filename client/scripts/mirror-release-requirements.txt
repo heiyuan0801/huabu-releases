@@ -1,0 +1,4 @@
+# WinSparkle 0.8.1 still requires DSA verification; cryptography 51 deprecates it.
+cryptography>=46,<51
+defusedxml>=0.7.1
+packaging>=24

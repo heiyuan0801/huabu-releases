@@ -11,8 +11,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart';
 
-const updateManifestUrl = String.fromEnvironment('APP_UPDATE_MANIFEST_URL', defaultValue: 'https://github.com/heiyuan0801/huabu-releases/releases/latest/download/flutter-release.json');
-const releaseHistoryUrl = 'https://github.com/heiyuan0801/huabu-releases/releases';
+const updateManifestUrl = String.fromEnvironment('APP_UPDATE_MANIFEST_URL', defaultValue: 'https://image.iyuns.com/client-updates/latest/flutter-release.json');
+const releaseHistoryUrl = 'https://image.iyuns.com/client-updates/';
 final packageInfoProvider = FutureProvider((ref) => PackageInfo.fromPlatform());
 
 String get clientPlatform => switch (defaultTargetPlatform) {

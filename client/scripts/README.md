@@ -51,7 +51,7 @@ Windows 仅在指定 `--windows-installer` 实际 setup EXE 后添加下载入�
 
 Android 默认不进入正式下载清单。正式签名的可安装 APK 通过 `--android-apk` 明确选择，并以 `apksigner` 验证；debug 签名 APK 拒绝进入正式清单。AAB 和未签名 iOS xcarchive 都不会作为安装入口。`release-artifacts.json` 单独记录所有本地产物、SHA256 和测试/未签名状态，供发布前核对。iOS 正式安装渠道尚需另行配置，appcasts 只对受支持的桌面端生成。
 
-实际发布时将生成的 `flutter-release.json`、appcast XML 和对应可分发安装包放入同一个 GitHub Release；客户端可使用公开仓库的 `releases/latest/download/flutter-release.json` 作为稳定检查地址。更新清单里的下载和 appcast 地址固定到同一个实际 tag。修改安装包后必须重新打包、签名并生成资料。
+实际发布时将生成的 `flutter-release.json`、appcast XML 和对应可分发安装包放入同一个 GitHub Release，并将经核验的安装包与签名更新资料同步到本站镜像。客户端默认从 `https://image.iyuns.com/client-updates/latest/flutter-release.json` 检查更新，`https://image.iyuns.com/client-updates/` 提供历史日志；`--dart-define=APP_UPDATE_MANIFEST_URL=https://你的更新清单地址` 可覆写清单入口。镜像清单的下载与 appcast 地址应指向同一实际版本，改写 appcast 的包地址时保留原包字节与签名。修改安装包后必须重新打包、签名并生成资料。
 
 ## 正式分发与更新
 

@@ -55,6 +55,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('发布清单仅解析已发布的真实平台 HTTPS 地址', () async {
+    if (!const bool.hasEnvironment('APP_UPDATE_MANIFEST_URL')) expect(updateManifestUrl, 'https://image.iyuns.com/client-updates/latest/flutter-release.json');
+    expect(releaseHistoryUrl, 'https://image.iyuns.com/client-updates/');
     final adapter = _ReadOnlyAdapter((request) => ResponseBody.fromString(jsonEncode(_manifest()), 200, headers: {Headers.contentTypeHeader: [Headers.jsonContentType]}));
     final dio = Dio()..httpClientAdapter = adapter;
     addTearDown(() => dio.close(force: true));
