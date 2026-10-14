@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "version": "0.1.3",
-  "buildNumber": 4,
-  "notes": "# 未来画布 0.1.3\n\n- App 默认服务器改为 `https://image.iyuns.com`，直接调用新站接口，不经过旧域名 301。\n- 保留自定义服务器、按站点隔离的登录会话及个人 API 配置。首次进入新域名需重新登录，服务器上的账号、额度和作品已保留。\n- 微信小程序默认地址同步迁移，新站公开配置中的微信 AppID 与小程序一致。\n\nFlutter 客户端版本 0.1.3，构建号 4。静态分析和 148 项 Flutter 测试通过；小程序正式编译通过。真实设备邮箱/微信登录、相机扫码及旧版本安装更新仍待验收。\n\n下载说明：macOS 提供 DMG / ZIP，Windows 提供 x64 安装器 / 完整便携 ZIP，Android 沿用固定发行签名。iOS 未签名归档只供开发者签名导出，不能直接安装；CI Android Debug 仅供编译验证，不进入正式下载。\n\nmacOS 仍为 ad-hoc 签名且尚未完成 Apple 公证，Windows 尚未配置 Authenticode；Sparkle / WinSparkle 更新签名与发行身份签名是不同环节。\n",
+  "version": "0.1.4",
+  "buildNumber": 5,
+  "notes": "# 未来画布 0.1.4\n\n- 软件更新界面采用蓝色渐变图标、版本对照和更新内容卡片，适配桌面横向布局与手机紧凑布局，并支持明暗主题。\n- 更新窗口展示真实发行日志和系统更新阶段，保留头像旁更新入口、新版本红点及历史日志入口。\n- 优化小窗口下的留白、日志滚动、底部操作和 Escape 关闭；修复深色更新日志行内代码的可读性。\n- 修复当前 Forui 版本的主题与样式 API 编译错误，保留已有 Sparkle / WinSparkle 签名更新流程。\n\n客户端版本 **0.1.4**，构建号 **5**。静态分析无问题，148 项 Flutter 测试通过，最终修改后再次通过 27 项更新专项测试。macOS Release 已实际运行并检查明暗更新弹窗、真实日志和关闭操作。\n\n更新说明：下载和安装由系统更新窗口确认；应用仅展示当前更新库实际提供的阶段，不虚构下载百分比、速度或剩余时间。旧版至新版的自动安装替换仍待真实跨版本验收。\n\n下载说明：macOS 提供 Intel / Apple Silicon 通用 DMG 与 ZIP；Windows 提供 x64 安装器与完整便携 ZIP；Android APK / AAB 沿用固定正式签名。iOS 未签名 xcarchive 仅供开发者在 Xcode 中签名导出，不能直接安装。\n\nmacOS 当前仍为 ad-hoc 签名、尚未完成 Apple 公证；Windows 尚未配置 Authenticode。Sparkle / WinSparkle 更新签名与平台发行身份签名是不同环节。\n",
   "downloads": {
-    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.3/huabu-0.1.3%2B4-macos.dmg",
-    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.3/huabu-0.1.3%2B4-windows-x64-setup.exe",
-    "android": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.3/huabu-0.1.3%2B4-android-universal.apk"
+    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.4/huabu-0.1.4%2B5-macos.dmg",
+    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.4/huabu-0.1.4%2B5-windows-x64-setup.exe",
+    "android": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.4/huabu-0.1.4%2B5-android-universal.apk"
   },
   "appcasts": {
-    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.3/appcast-macos.xml",
-    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.3/appcast-windows.xml"
+    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.4/appcast-macos.xml",
+    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.4/appcast-windows.xml"
   }
 }
