@@ -1,5 +1,5 @@
-Source commit: e4a3cf9649ba12c9b9d1a423c7b7a5c2d75bcda3
-Run: https://github.com/heiyuan0801/huabu-releases/actions/runs/39750274317
+Source commit: e5bbebe116553f5bd4e712eab91b4af9916b3479
+Run: https://github.com/heiyuan0801/huabu-releases/actions/runs/39751248216
 Cloning into 'D:\a\_temp\flutter-sdk'...
 Note: switching to 'abaf9c523780a608bd46686fd5e53740a07077f8'.
 
@@ -18,7 +18,7 @@ Or undo this operation with:
 
 Turn off this advice by setting config variable advice.detachedHead to false
 
-Updating files:  35% (5663/16076)
+Updating files:  35% (5682/16076)
 Updating files:  36% (5788/16076)
 Updating files:  37% (5949/16076)
 Updating files:  38% (6109/16076)
@@ -42,7 +42,6 @@ Updating files:  55% (8842/16076)
 Updating files:  56% (9003/16076)
 Updating files:  57% (9164/16076)
 Updating files:  58% (9325/16076)
-Updating files:  58% (9427/16076)
 Updating files:  59% (9485/16076)
 Updating files:  60% (9646/16076)
 Updating files:  61% (9807/16076)
@@ -52,6 +51,7 @@ Updating files:  64% (10289/16076)
 Updating files:  65% (10450/16076)
 Updating files:  66% (10611/16076)
 Updating files:  67% (10771/16076)
+Updating files:  67% (10837/16076)
 Updating files:  68% (10932/16076)
 Updating files:  69% (11093/16076)
 Updating files:  70% (11254/16076)
@@ -69,8 +69,8 @@ Updating files:  81% (13022/16076)
 Updating files:  82% (13183/16076)
 Updating files:  83% (13344/16076)
 Updating files:  84% (13504/16076)
-Updating files:  84% (13537/16076)
 Updating files:  85% (13665/16076)
+Updating files:  85% (13754/16076)
 Updating files:  86% (13826/16076)
 Updating files:  87% (13987/16076)
 Updating files:  88% (14147/16076)
@@ -99,15 +99,15 @@ Flutter 3.47.7 • channel [user-branch] • https://github.com/flutter/flutter.
 Framework • revision abaf9c5237 (2 weeks ago) • 2026-10-08 09:51:21 -0700
 Engine • hash d8a2d6c768c334d53e16277f837970ffa1e2de81 (revision deb287481e) (14 days ago) • 2026-10-07 17:09:12.000Z
 Tools • Dart 3.13.5 • DevTools 2.60.0
-[1/10] Material Fonts                                              321ms
-[2/10] Gradle Wrapper                                               23ms
+[1/10] Material Fonts                                              309ms
+[2/10] Gradle Wrapper                                               21ms
 [3/10] Flutter SDK
-  ├─ [1/5] sky_engine                                               82ms
-  ├─ [2/5] flutter_gpu                                              24ms
-  ├─ [3/5] flutter_patched_sdk                                     186ms
-  ├─ [4/5] flutter_patched_sdk_product                             158ms
-  └─ [5/5] windows-x64                                           1,107ms
-[10/10] windows-x64/font-subset                                    150ms
+  ├─ [1/5] sky_engine                                              100ms
+  ├─ [2/5] flutter_gpu                                              21ms
+  ├─ [3/5] flutter_patched_sdk                                     188ms
+  ├─ [4/5] flutter_patched_sdk_product                             162ms
+  └─ [5/5] windows-x64                                           1,266ms
+[10/10] windows-x64/font-subset                                    135ms
 Resolving dependencies...
 Downloading packages...
   archive 4.5.0 (4.5.2 available)
@@ -133,10 +133,10 @@ Got dependencies!
 19 packages have newer versions incompatible with dependency constraints.
 Try `flutter pub outdated` for more information.
 [1/1] Windows SDK
-  ├─ [1/4] windows-x64-debug/windows-x64-flutter                    3.1s
-  ├─ [2/4] windows-x64/flutter-cpp-client-wrapper                   79ms
-  ├─ [3/4] windows-x64-profile/windows-x64-flutter               2,276ms
-  └─ [4/4] windows-x64-release/windows-x64-flutter               2,108ms
+  ├─ [1/4] windows-x64-debug/windows-x64-flutter                    3.7s
+  ├─ [2/4] windows-x64/flutter-cpp-client-wrapper                   44ms
+  ├─ [3/4] windows-x64-profile/windows-x64-flutter               2,804ms
+  └─ [4/4] windows-x64-release/windows-x64-flutter               2,688ms
 Resolving dependencies...
 Downloading packages...
   archive 4.5.0 (4.5.2 available)
@@ -180,7 +180,7 @@ CMake Warning (dev) at flutter/ephemeral/.plugin_symlinks/media_kit_libs_windows
   command to set the policy and suppress this warning.
 This warning is for project developers.  Use -Wno-dev to suppress it.
 
-Building Windows application...                                   126.7s
+Building Windows application...                                   135.5s
 √ Built build\windows\x64\runner\Release\huabu_app.exe
 Inno Setup 6 Command-Line Compiler
 Copyright (C) 1997-2026 Jordan Russell. All rights reserved.
@@ -280,6 +280,6 @@ Creating setup files
    Updating manifest (Setup.exe)
 
 
-Successful compile (18.125 sec). Resulting Setup program filename is:
+Successful compile (20.563 sec). Resulting Setup program filename is:
 D:\a\huabu-releases\huabu-releases\client\build\packages\0.1.6+7\windows-x64\huabu-0.1.6+7-windows-x64-setup.exe
 资源包位置: D:\a\huabu-releases\huabu-releases\client\build\packages\0.1.6+7\windows-x64
