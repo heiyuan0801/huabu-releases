@@ -5,6 +5,7 @@
 - `app-icon.png`：通用不透明图标母版。
 - `app-icon-macos.png`：保留相同标志的 macOS 透明圆角图标。
 - `studio-image.png`、`studio-video.png`、`studio-chat.png`：透明背景入口插画。
+- `desktop-launch-mark.png`：沿用现有标志的透明开屏素材，供 macOS/Windows 在明暗背景上合成动画；参考图、完整提示词与使用方式见 [桌面开屏说明](../../design/desktop-launch.md)。
 
 四个平台的图标尺寸由 `flutter_launcher_icons` 根据 `pubspec.yaml` 生成；运行 `dart run flutter_launcher_icons` 可重新生成。保留母版，避免手动编辑平台尺寸文件。
 

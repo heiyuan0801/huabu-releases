@@ -14,6 +14,7 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 CloseApplications=yes
+UsePreviousTasks=yes
 #if AppArch == "arm64"
 ArchitecturesAllowed=arm64
 ArchitecturesInstallIn64BitMode=arm64
@@ -25,8 +26,12 @@ ArchitecturesInstallIn64BitMode=x64compatible
 [Files]
 Source: "{#BundleDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+[Tasks]
+Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: "快捷方式："
+
 [Icons]
 Name: "{autoprograms}\未来画布"; Filename: "{app}\huabu_app.exe"
+Name: "{autodesktop}\未来画布"; Filename: "{app}\huabu_app.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\huabu_app.exe"; Description: "启动未来画布"; Flags: nowait postinstall skipifsilent

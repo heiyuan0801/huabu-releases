@@ -28,7 +28,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
   late final int _draftEpoch;
   String? _modelId;
   String _ratio = '1:1', _quality = 'auto';
-  bool _asynchronous = false, _imageMode = false, _dragging = false;
+  bool _asynchronous = false, _imageMode = false, _dragging = false, _batchMode = false;
   ImageReference? _reference;
   String _resultRunId = '';
   int _selectedResult = 0;
@@ -42,7 +42,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
     _count = TextEditingController(text: draft.count);
     _modelId = draft.modelId;
     _ratio = draft.ratio; _quality = draft.quality;
-    _asynchronous = draft.asynchronous; _imageMode = draft.imageMode; _reference = draft.reference;
+    _asynchronous = draft.asynchronous; _imageMode = draft.imageMode; _reference = draft.reference; _batchMode = draft.batchMode;
     _count.addListener(_saveDraft);
   }
 
@@ -50,7 +50,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
   void dispose() { _prompt.dispose(); _count.dispose(); super.dispose(); }
 
   void _saveDraft() {
-    if (mounted && ref.read(apiProvider).epoch == _draftEpoch) ref.read(imageDraftProvider.notifier).setDraft(ImageDraft(modelId: _modelId, ratio: _ratio, quality: _quality, count: _count.text, asynchronous: _asynchronous, imageMode: _imageMode, reference: _reference));
+    if (mounted && ref.read(apiProvider).epoch == _draftEpoch) ref.read(imageDraftProvider.notifier).setDraft(ImageDraft(modelId: _modelId, ratio: _ratio, quality: _quality, count: _count.text, asynchronous: _asynchronous, imageMode: _imageMode, batchMode: _batchMode, reference: _reference));
   }
   void _update(VoidCallback action) {
     if (!mounted || ref.read(apiProvider).epoch != _draftEpoch) return;
@@ -82,17 +82,37 @@ class _CreatePageState extends ConsumerState<CreatePage> {
     } catch (error) { if (mounted && _current(epoch)) toast(context, errorMessage(error)); }
   }
 
+  Future<void> _importPrompts() async {
+    final api = ref.read(apiProvider), epoch = ref.read(apiProvider).epoch;
+    try {
+      final file = await openFile(acceptedTypeGroups: const [XTypeGroup(label: '提示词文本', extensions: ['txt'], uniformTypeIdentifiers: ['public.plain-text'])]);
+      if (file == null || !_current(epoch)) return;
+      final text = await file.readAsString();
+      if (!_current(epoch)) return;
+      if (ref.read(generationProvider).working) return;
+      _prompt.text = text.replaceFirst('\uFEFF', '');
+      ref.read(promptDraftProvider.notifier).setPrompt(_prompt.text);
+      setState(() {});
+    } catch (error) { if (_current(epoch)) toast(context, errorMessage(error)); }
+  }
+  List<String> get _prompts => _prompt.text.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
+
   void _generate(List<ImageModel> models) {
     if (!mounted || ref.read(apiProvider).epoch != _draftEpoch) return;
     final state = ref.read(generationProvider);
-    if (state.busy || state.saving) return;
+    if (state.working || state.hasUnsaved) return;
     final model = models.where((item) => item.id == _modelId).firstOrNull ?? models.firstOrNull;
     if (model == null || !imageParameters(model).supported) return;
     final parameters = imageParameters(model);
     if (_imageMode && _reference == null) { toast(context, '请先添加参考图片'); return; }
     final count = parameters.singleImageEdit && _imageMode ? 1 : int.tryParse(_count.text);
     if (count == null || count < 1) { toast(context, '请输入正整数图片数量'); return; }
+    if (_prompt.text.trim().isEmpty) { toast(context, '请填写提示词'); return; }
     ref.read(promptDraftProvider.notifier).setPrompt(_prompt.text);
+    if (_batchMode) {
+      ref.read(generationProvider.notifier).generateBatch(model, prompts: _prompts, ratio: parameters.ratio ? _ratio : 'auto', count: count, quality: parameters.quality ? _quality : 'auto', reference: _imageMode ? _reference : null, asynchronous: _asynchronous && parameters.asynchronous);
+      return;
+    }
     ref.read(generationProvider.notifier).generate(model, prompt: _prompt.text, ratio: parameters.ratio ? _ratio : 'auto', count: count, quality: parameters.quality ? _quality : 'auto', reference: _imageMode ? _reference : null, asynchronous: _asynchronous && parameters.asynchronous);
   }
 
@@ -122,7 +142,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
                 if (issues.isNotEmpty) ...[for (final entry in issues.entries) FAlert(title: Text('${entry.key}暂时无法读取'), subtitle: Text(entry.value)), FButton(mainAxisSize: MainAxisSize.min, variant: FButtonVariant.ghost, onPress: () => refreshCatalog(ref), child: const Text('重试目录'))],
                 _composer(state, models),
                 if (!desktop) FButton(variant: FButtonVariant.secondary, prefix: const Icon(FLucideIcons.slidersHorizontal, size: 16), onPress: () => _showParameters(models), child: const Text('模型与生成参数')),
-                _results(state),
+                if (_batchMode && state.batch.isNotEmpty) _batchResults(state) else _results(state),
               ]);
               if (!desktop) return Column(children: [Expanded(child: SingleChildScrollView(padding: const EdgeInsets.all(20), child: workspace)), SafeArea(top: false, child: Padding(padding: const EdgeInsets.fromLTRB(20, 0, 20, 12), child: _operation(models, state)))]);
               return SingleChildScrollView(scrollDirection: Axis.horizontal, child: SizedBox(width: width, height: bounds.maxHeight, child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -135,15 +155,22 @@ class _CreatePageState extends ConsumerState<CreatePage> {
   }
 
   Widget _composer(GenerationState state, List<ImageModel> models) {
-    final busy = state.busy || state.saving;
+    final busy = state.working;
     final model = models.where((item) => item.id == _modelId).firstOrNull ?? models.first;
     final supported = imageParameters(model).supported;
     final theme = context.theme;
     return FCard(builder: cardBody, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 20, children: [
       Row(spacing: 8, children: [
+        for (final mode in [(false, '单次创作'), (true, '批量生图')]) FButton(variant: _batchMode == mode.$1 ? FButtonVariant.secondary : FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, onPress: busy || state.hasUnsaved ? null : () => _update(() => _batchMode = mode.$1), child: Text(mode.$2)),
+        const Spacer(),
+        if (_batchMode) FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '导入提示词 TXT', onPress: busy ? null : _importPrompts, child: const Icon(FLucideIcons.fileInput, size: 17)),
+      ]),
+      Row(spacing: 8, children: [
         for (final mode in [(false, '文生图'), (true, '图生图')]) FButton(variant: _imageMode == mode.$1 ? FButtonVariant.primary : FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, onPress: busy || !supported ? null : () => _update(() => _imageMode = mode.$1), child: Text(mode.$2)),
       ]),
-      FTextField.multiline(control: FTextFieldControl.managed(controller: _prompt, onChange: (value) { if (ref.read(apiProvider).epoch == _draftEpoch) ref.read(promptDraftProvider.notifier).setPrompt(value.text); }), hint: '描述你的想象：主体、光线、色彩，以及每一个细节…', minLines: 4, maxLines: 7, enabled: !busy),
+      FTextField.multiline(control: FTextFieldControl.managed(controller: _prompt, onChange: (value) { if (ref.read(apiProvider).epoch == _draftEpoch) { ref.read(promptDraftProvider.notifier).setPrompt(value.text); if (_batchMode) setState(() {}); } }), hint: _batchMode ? '每行一条提示词，空行忽略。也可导入 TXT 文件。\n例如：雨夜街头的蓝色跑车\n例如：暖光下的玻璃香水瓶' : '描述你的想象：主体、光线、色彩，以及每一个细节…', minLines: 4, maxLines: 7, enabled: !busy),
+      if (_batchMode) Text('共 ${_prompts.length} 项 · 使用相同模型与参数${_imageMode ? '及参考图' : ''}。逐项执行，失败后继续，不自动重试。请保持应用运行。', style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground)),
+      Text('新图片按日期保存到本机；服务器不提供图片备份。保存位置可在个人设置中修改。', style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground)),
       if (_imageMode) DropTarget(
         enable: AppLayout.isDesktop && !busy && supported && ModalRoute.of(context)?.isCurrent == true && GoRouter.of(context).routeInformationProvider.value.uri.path == '/create',
         onDragEntered: (_) => setState(() => _dragging = true), onDragExited: (_) => setState(() => _dragging = false),
@@ -170,7 +197,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
   Widget _parameters(List<ImageModel> models, GenerationState state, {VoidCallback? refresh}) {
     final selected = models.where((model) => model.id == _modelId).firstOrNull ?? models.first;
     final parameters = imageParameters(selected);
-    final busy = state.busy || state.saving;
+    final busy = state.working;
     void update(VoidCallback action) { _update(action); refresh?.call(); }
     return FCard(key: const ValueKey('image-parameters'), builder: cardBody, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 20, children: [
       const Text('模型设置', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -190,14 +217,40 @@ class _CreatePageState extends ConsumerState<CreatePage> {
 
   Widget _operation(List<ImageModel> models, GenerationState state) {
     final selected = models.where((model) => model.id == _modelId).firstOrNull ?? models.first;
-    final parameters = imageParameters(selected), busy = state.busy || state.saving;
+    final parameters = imageParameters(selected), busy = state.working;
     final singleEdit = parameters.singleImageEdit && _imageMode;
     final count = singleEdit ? 1 : int.tryParse(_count.text);
     return FCard(key: const ValueKey('image-operation'), builder: cardBody, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 12, children: [
-      if (singleEdit) const Text('参考图编辑 · 本次生成 1 张') else FTextField(control: FTextFieldControl.managed(controller: _count), label: const Text('生成数量'), keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], enabled: !busy && parameters.supported),
-      Text(selected.providerId.startsWith('local:') ? '个人渠道 · 由渠道计费' : '${count != null && count > 0 ? '预计 ${selected.creditCost * count} 算力' : '每张 ${selected.creditCost} 算力'} · 以服务端记录为准', style: context.theme.typography.body.xs.copyWith(color: context.theme.colors.mutedForeground)),
-      FButton(prefix: busy ? const FCircularProgress() : const Icon(FLucideIcons.sparkles, size: 17), onPress: busy || !parameters.supported ? null : () => _generate(models), child: Text(state.saving ? '正在保存作品' : state.busy ? '正在生成' : '立即生成')),
+      if (singleEdit) Text(_batchMode ? '参考图编辑 · 每项生成 1 张' : '参考图编辑 · 本次生成 1 张') else FTextField(control: FTextFieldControl.managed(controller: _count), label: Text(_batchMode ? '每项生成数量' : '生成数量'), keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], enabled: !busy && parameters.supported),
+      Text(selected.providerId.startsWith('local:') ? '个人渠道 · 由渠道计费' : '${count != null && count > 0 ? '预计 ${selected.creditCost * count * (_batchMode ? _prompts.length : 1)} 算力' : '每张 ${selected.creditCost} 算力'} · 以服务端记录为准', style: context.theme.typography.body.xs.copyWith(color: context.theme.colors.mutedForeground)),
+      if (state.hasUnsaved) Text('请先重新保存已生成的图片，再开始新创作。', style: context.theme.typography.body.xs.copyWith(color: context.theme.colors.destructive)),
+      FButton(prefix: busy ? const FCircularProgress() : const Icon(FLucideIcons.sparkles, size: 17), onPress: busy || state.hasUnsaved || !parameters.supported ? null : () => _generate(models), child: Text(state.saving ? '正在保存到本机' : busy ? '正在生成' : _batchMode ? '开始批量生成' : '立即生成')),
+      if (state.batchRunning && state.batch.any((item) => item.status == BatchImageStatus.queued)) FButton(variant: FButtonVariant.outline, onPress: state.stopRequested ? null : () => ref.read(generationProvider.notifier).stopBatch(), child: Text(state.stopRequested ? '当前项完成后停止' : '停止后续任务')),
     ]));
+  }
+
+  Widget _batchResults(GenerationState state) {
+    final completed = state.batch.where((item) => ![BatchImageStatus.queued, BatchImageStatus.generating, BatchImageStatus.saving].contains(item.status)).length;
+    final saved = state.batch.fold<int>(0, (count, item) => count + item.works.length);
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 16, children: [
+      Row(children: [const Text('批量任务', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)), const Spacer(), Text('$completed / ${state.batch.length} 项 · 已保存 $saved 张', style: context.theme.typography.body.xs)]),
+      FDeterminateProgress(value: completed / state.batch.length, semanticsLabel: '已处理 $completed 项，共 ${state.batch.length} 项'),
+      if (state.stopRequested) const FAlert(title: Text('已请求停止后续任务'), subtitle: Text('当前已提交的请求继续接收并保存结果，未执行项不会扣费。')),
+      for (var index = 0; index < state.batch.length; index++) FCard(builder: cardBody, child: Builder(builder: (context) {
+        final item = state.batch[index];
+        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 12, children: [
+          Row(spacing: 10, children: [Text('${index + 1}'.padLeft(2, '0'), style: context.theme.typography.body.sm.copyWith(color: context.theme.colors.mutedForeground)), Expanded(child: Text(item.prompt, maxLines: 2, overflow: TextOverflow.ellipsis)), FBadge(variant: FBadgeVariant.secondary, child: Text(item.label))]),
+          if (item.error.isNotEmpty) Text(item.error, style: context.theme.typography.body.xs.copyWith(color: context.theme.colors.mutedForeground)),
+          if (item.status == BatchImageStatus.saveFailed) FButton(variant: FButtonVariant.outline, mainAxisSize: MainAxisSize.min, onPress: state.working ? null : () => ref.read(generationProvider.notifier).saveBatchItem(index), child: const Text('仅重新保存，不重新生成')),
+          if (item.output != null) ...[
+            const Text('以下图片仍在内存中，未完成本机保存，请勿退出应用。'),
+            SizedBox(height: 120, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: item.output!.images.length, separatorBuilder: (_, _) => const SizedBox(width: 10), itemBuilder: (_, image) => ClipRRect(borderRadius: BorderRadius.circular(AppRadius.md), child: Image.memory(item.output!.images[image].bytes, width: 120, height: 120, fit: BoxFit.cover, cacheWidth: (120 * MediaQuery.devicePixelRatioOf(context)).ceil())))),
+          ],
+          if (item.runId.isNotEmpty && [BatchImageStatus.failed, BatchImageStatus.partial].contains(item.status)) FButton(variant: FButtonVariant.ghost, mainAxisSize: MainAxisSize.min, onPress: () => context.go('/tasks'), child: const Text('查看真实任务状态')),
+          if (item.works.isNotEmpty) SizedBox(height: 120, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: item.works.length, separatorBuilder: (_, _) => const SizedBox(width: 10), itemBuilder: (_, image) => SizedBox(width: 120, child: ArtworkTile(artwork: item.works[image], imageOnly: true, onPress: () => context.push('/work', extra: item.works[image]))))),
+        ]);
+      })),
+    ]);
   }
 
   Widget _results(GenerationState state) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

@@ -7,12 +7,13 @@ import '../../core/models.dart';
 import '../channels/channel_providers.dart';
 
 class GenerationOutput {
-  const GenerationOutput({required this.runId, required this.run, required this.images, required this.prompt, required this.model, required this.ratio, required this.quality, required this.requestedCount, this.partial = false, this.notice = ''});
+  const GenerationOutput({required this.runId, required this.run, required this.images, required this.prompt, required this.model, required this.ratio, required this.quality, required this.requestedCount, this.partial = false, this.notice = '', this.receivedAt});
   final String runId, prompt, model, ratio, quality, notice;
   final GenerationRun? run;
   final int requestedCount;
   final bool partial;
   final List<MediaBytes> images;
+  final DateTime? receivedAt;
 }
 
 class GenerationException extends ApiException {
@@ -45,13 +46,15 @@ class GenerationService {
     final epoch = api.epoch;
     final target = await resolveModelApiTarget(api, model);
     api.assertEpoch(epoch);
-    final begun = await api.post('/generations', {'model': model.value, 'capability': 'image', 'source': target.source, 'requestedCount': count, 'detail': {'prompt': prompt, 'size': ratio, 'quality': quality, 'n': count}});
+    // Existing server opt-in: redact media from receipts instead of archiving it.
+    final begun = await api.post('/generations', {'model': model.value, 'capability': 'image', 'source': target.source, 'requestedCount': count, 'detail': {'prompt': prompt, 'size': ratio, 'quality': quality, 'n': count, 'resultStorage': 'browser'}});
     api.assertEpoch(epoch);
     final runId = jsonString(begun['id']);
     if (runId.isEmpty) throw const ApiException('服务器没有返回任务编号');
     final images = <MediaBytes>[];
+    DateTime? receivedAt;
     GenerationRun? run;
-    GenerationOutput output({bool partial = false, String notice = ''}) => GenerationOutput(runId: runId, run: run, images: images, prompt: prompt, model: model.value, ratio: ratio, quality: quality, requestedCount: count, partial: partial, notice: notice);
+    GenerationOutput output({bool partial = false, String notice = ''}) => GenerationOutput(runId: runId, run: run, images: images, prompt: prompt, model: model.value, ratio: ratio, quality: quality, requestedCount: count, partial: partial, notice: notice, receivedAt: receivedAt);
     try {
       await api.storageWrite('generation_contexts', runId, {'prompt': prompt, 'model': model.value, 'capability': 'image', 'size': ratio, 'quality': quality, 'requestedCount': count}, revision: '0');
       final requestCount = model.apiFormat == 'gemini' || model.model.toLowerCase() == 'muse-image' ? count : 1;
@@ -90,6 +93,7 @@ class GenerationService {
           api.assertEpoch(epoch);
           try {
             images.add(await target.media(source, runId: runId));
+            receivedAt ??= DateTime.now();
             api.assertEpoch(epoch);
           } on ApiException catch (error) {
             api.assertEpoch(epoch);
@@ -103,7 +107,7 @@ class GenerationService {
       api.assertEpoch(epoch);
       run = await status(runId);
       api.assertEpoch(epoch);
-      return output(partial: images.length < count, notice: images.length < count ? '已保存部分图片，其余结果请在任务记录核对' : '');
+      return output(partial: images.length < count, notice: images.length < count ? '已取得部分图片，其余结果请在任务记录核对；服务器不备份新生成图片' : '');
     } on ApiException catch (error) {
       api.assertEpoch(epoch);
       if (images.isNotEmpty && !error.canceled) {
@@ -153,7 +157,7 @@ class GenerationService {
     final responses = (result['responses'] as List? ?? []).map(jsonObject).toList();
     if (responses.isEmpty && result['response'] is Map) responses.add(jsonObject(result['response']));
     final sources = responses.expand(imageSources).toSet();
-    if (sources.isEmpty) throw GenerationException(run.message.isEmpty ? '暂时没有可恢复的图片，任务仍需核对' : run.message, runId: runId);
+    if (sources.isEmpty) throw GenerationException(run.message.isEmpty ? '没有可恢复的图片。新任务仅保存到本机，服务器只提供任务状态，不备份图片；请检查本机保存目录' : run.message, runId: runId);
     final images = <MediaBytes>[];
     final target = await resolveModelValueApiTarget(api, run.model);
     api.assertEpoch(epoch);

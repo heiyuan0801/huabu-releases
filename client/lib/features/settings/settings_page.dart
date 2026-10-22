@@ -10,6 +10,7 @@ import '../../core/theme.dart';
 import '../../core/widgets.dart';
 import '../updates/client_updates.dart';
 import '../updates/update_widgets.dart';
+import '../works/local_image_settings.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -162,6 +163,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final mode = ref.watch(themeModeProvider);
     final credits = ref.watch(creditsProvider);
     return Column(spacing: 20, children: [
+      const LocalImageSettings(),
       FCard(child: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 18, children: [
         Row(spacing: 10, children: [Icon(FLucideIcons.sparkles, size: 19, color: theme.colors.primary), Text('创作额度', style: theme.typography.display.md.copyWith(fontWeight: FontWeight.w600)), const Spacer(), FButton.icon(variant: FButtonVariant.ghost, size: FButtonSizeVariant.sm, semanticsLabel: '刷新创作额度', onPress: credits.isLoading ? null : () => ref.invalidate(creditsProvider), child: const Icon(FLucideIcons.refreshCw, size: 15))]),
         credits.when(
@@ -189,7 +191,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       FCard(child: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 16, children: [
         Row(spacing: 10, children: [Icon(FLucideIcons.server, size: 19, color: theme.colors.primary), Text('当前服务', style: theme.typography.display.md.copyWith(fontWeight: FontWeight.w600))]),
         SelectableText(apiOrigin, style: theme.typography.body.sm),
-        Text('账号、作品与素材保存在项目服务器。', style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground, height: 1.6)),
+        Text('新生成图片与新收藏保存在本机；账号、任务、视频及主动上传的素材沿用服务器存储。', style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground, height: 1.6)),
         const FDivider(),
         Row(spacing: 8, children: [Icon(FLucideIcons.shieldCheck, size: 15, color: theme.colors.mutedForeground), Expanded(child: Text('登录会话由系统安全存储保管', style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground)))]),
       ]))),

@@ -278,22 +278,14 @@ void main() {
     expect(adapter.requests.single.method, 'GET');
   });
 
-  for (final damaged in [
-    (name: 'blob', value: <String, dynamic>{'images': []}, blob: true),
-    (name: '非对象', value: 'damaged-record', blob: false),
-    (name: 'images 非列表', value: <String, dynamic>{'images': 'damaged-images'}, blob: false),
-  ]) {
-    test('损坏图片记录 ${damaged.name} 拒绝覆盖', () async {
-      final (api, adapter) = _api((request) => _json(damaged.value,
-        headers: {if (damaged.blob) 'X-Storage-Blob': ['1']}));
-      const output = GenerationOutput(runId: 'fixture-run', run: null, images: [],
-        prompt: '测试图片', model: 'managed:fixture-provider::gpt-image-1',
-        ratio: '1:1', quality: 'auto', requestedCount: 1);
-      await expectLater(HuabuRepository(api).saveGeneration(output), throwsA(isA<ApiException>()));
-      expect(adapter.requests, hasLength(1));
-      expect(adapter.requests.single.method, 'GET');
-    });
-  }
+  test('本机图片存储未初始化时不回退上传或覆盖云端历史', () async {
+    final (api, adapter) = _api(_unexpected);
+    const output = GenerationOutput(runId: 'fixture-run', run: null, images: [],
+      prompt: '测试图片', model: 'managed:fixture-provider::gpt-image-1',
+      ratio: '1:1', quality: 'auto', requestedCount: 1);
+    await expectLater(HuabuRepository(api).saveGeneration(output), throwsA(isA<ApiException>()));
+    expect(adapter.requests, isEmpty);
+  });
 
   for (final damaged in [
     (name: 'blob', value: <String, dynamic>{'status': 'pending'}, blob: true),

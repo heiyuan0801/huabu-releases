@@ -25,6 +25,7 @@ import '../features/video/video_page.dart';
 import '../features/video/video_detail_page.dart';
 import '../features/video/video_repository.dart';
 import '../features/web_login/web_login_page.dart';
+import 'desktop_launch.dart';
 import 'workspace_shell.dart';
 
 final routerProvider = Provider((ref) {
@@ -85,7 +86,7 @@ class HuabuApp extends ConsumerWidget {
       scrollBehavior: const _AppScrollBehavior(),
       builder: (context, child) => FTheme(
         data: Theme.brightnessOf(context) == Brightness.dark ? dark : light,
-        child: _WindowAppearance(child: FToaster(child: FTooltipGroup(child: child!))),
+        child: _WindowAppearance(child: DesktopLaunchOverlay(child: FToaster(child: FTooltipGroup(child: child!)))),
       ),
     );
   }

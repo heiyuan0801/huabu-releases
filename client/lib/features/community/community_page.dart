@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/providers.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
+import '../works/local_image_store.dart';
 
 typedef CommunityQuery = ({int page, String keyword, String topic, String order});
 final communityPostsProvider = FutureProvider.autoDispose.family<Json, CommunityQuery>((ref, query) async {
@@ -103,7 +104,7 @@ class _PostDetailState extends ConsumerState<_PostDetail> {
       await action(); api.assertEpoch(epoch);
       if (mounted) {
         ref.invalidate(communityPostProvider(widget.id)); ref.invalidate(favoritesProvider); widget.onChanged();
-        if (name == 'favorite') toast(context, '已收藏独立作品副本');
+        if (name == 'favorite') toast(context, '已收藏到本机，未上传服务器');
       }
     } catch (error) { if (mounted && api.epoch == epoch) toast(context, errorMessage(error)); }
     finally { if (mounted && api.epoch == epoch) setState(() => _busy = ''); }
@@ -112,7 +113,7 @@ class _PostDetailState extends ConsumerState<_PostDetail> {
   Widget _content(Json post) {
     final theme = context.theme, images = (post['images'] as List? ?? []).map(jsonObject).toList();
     final work = images.isEmpty ? null : _artwork(post, images[_image < images.length ? _image : 0]);
-    final saved = work != null && (ref.watch(favoritesProvider).asData?.value.any((favorite) => favorite.id == work.id) ?? false);
+    final saved = work != null && (ref.watch(favoritesProvider).asData?.value.any((favorite) => favorite.id == LocalImageStore.favoriteId(work)) ?? false);
     final info = Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 20, children: [
       Row(spacing: 12, children: [FAvatar.raw(size: 34, child: post['avatarUrl'] == '' ? const Icon(FLucideIcons.userRound, size: 17) : ServerImage(jsonString(post['avatarUrl']))), Expanded(child: Text(jsonString(post['displayName']), style: const TextStyle(fontWeight: FontWeight.w600)))]),
       Text(jsonString(post['title']), style: theme.typography.display.lg),

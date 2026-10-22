@@ -2,7 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Only device preferences live here. Account content remains on the server.
+/// Device preferences only. Local image metadata has its own account-scoped DB.
 class AppDatabase extends GeneratedDatabase {
   AppDatabase() : super(driftDatabase(
     name: 'huabu_preferences',

@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
 
 class ImageDraft {
-  const ImageDraft({this.modelId, this.ratio = '1:1', this.quality = 'auto', this.count = '1', this.asynchronous = false, this.imageMode = false, this.reference});
+  const ImageDraft({this.modelId, this.ratio = '1:1', this.quality = 'auto', this.count = '1', this.asynchronous = false, this.imageMode = false, this.batchMode = false, this.reference});
   final String? modelId;
   final String ratio, quality, count;
-  final bool asynchronous, imageMode;
+  final bool asynchronous, imageMode, batchMode;
   final ImageReference? reference;
 }
 

@@ -24,6 +24,7 @@ class _WorksPageState extends ConsumerState<WorksPage> {
   String _keyword = '', _recovering = '', _kind = 'image';
   bool _selecting = false, _managing = false;
   final _selected = <String>{};
+  FutureProvider<List<Artwork>> get _images => _kind == 'favorite' ? favoritesProvider : _kind == 'server' ? serverImageHistoryProvider : worksProvider;
 
   @override
   void didUpdateWidget(WorksPage oldWidget) {
@@ -38,7 +39,7 @@ class _WorksPageState extends ConsumerState<WorksPage> {
     final api = ref.read(apiProvider), epoch = ref.read(apiProvider).epoch;
     if (remove) {
       final confirmed = await showFDialog<bool>(context: context, builder: (context, style, animation) => FDialog(style: style, animation: animation, builder: (context, _) => Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, spacing: 20, children: [
-        Text('移除 ${selected.length} 件作品？', style: context.theme.typography.display.lg), const Text('选中项会从作品列表移除，已有素材、画布附件和服务端任务记录仍保留。'),
+        Text('移除 ${selected.length} 件作品？', style: context.theme.typography.display.lg), const Text('仅移除选中列表记录，本机磁盘原图、已有素材、画布附件和服务端任务记录仍保留。'),
         Row(mainAxisAlignment: MainAxisAlignment.end, spacing: 12, children: [FButton(variant: FButtonVariant.ghost, mainAxisSize: MainAxisSize.min, onPress: () => Navigator.pop(context, false), child: const Text('取消')), FButton(variant: FButtonVariant.destructive, mainAxisSize: MainAxisSize.min, onPress: () => Navigator.pop(context, true), child: const Text('移除'))]),
       ])))) ?? false;
       if (!confirmed || !mounted || api.epoch != epoch) return;
@@ -105,16 +106,16 @@ class _WorksPageState extends ConsumerState<WorksPage> {
     return CustomScrollView(slivers: [
       SliverPadding(padding: EdgeInsets.fromLTRB(constraints.maxWidth < 600 ? 20 : 32, 32, 24, 24), sliver: SliverToBoxAdapter(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('我的作品', style: context.theme.typography.display.xl2),
-        const SizedBox(height: 8), Text('留住每一次灵感，也看见创作的轨迹。', style: TextStyle(color: context.theme.colors.mutedForeground)),
+        const SizedBox(height: 8), Text('新图片按日期保存在本机，云端历史保留查看，不自动搬移。', style: TextStyle(color: context.theme.colors.mutedForeground)),
         const SizedBox(height: 24),
         Wrap(spacing: 8, runSpacing: 12, children: [
           FButton(mainAxisSize: MainAxisSize.min, variant: _tasks ? FButtonVariant.ghost : FButtonVariant.secondary, onPress: () => setState(() => _tasks = false), child: const Text('作品')),
           FButton(mainAxisSize: MainAxisSize.min, variant: _tasks ? FButtonVariant.secondary : FButtonVariant.ghost, onPress: () => setState(() => _tasks = true), child: const Text('生成任务')),
-          FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '刷新列表', onPress: () { ref.invalidate(worksProvider); ref.invalidate(favoritesProvider); ref.invalidate(videoWorksProvider); ref.invalidate(taskPageProvider(_page)); }, child: const Icon(FLucideIcons.refreshCw, size: 18)),
+          FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '刷新列表', onPress: () { ref.invalidate(worksProvider); ref.invalidate(favoritesProvider); ref.invalidate(serverImageHistoryProvider); ref.invalidate(videoWorksProvider); ref.invalidate(taskPageProvider(_page)); }, child: const Icon(FLucideIcons.refreshCw, size: 18)),
         ]),
         if (!_tasks) ...[
           const SizedBox(height: 20), Wrap(spacing: 8, runSpacing: 8, children: [
-            for (final kind in [('image', '图片'), ('video', '视频'), ('favorite', '收藏')]) FButton(variant: _kind == kind.$1 ? FButtonVariant.primary : FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, onPress: _managing ? null : () => setState(() { _kind = kind.$1; _selected.clear(); _selecting = false; }), child: Text(kind.$2)),
+            for (final kind in [('image', '本机图片'), ('favorite', '本机收藏'), ('server', '云端历史'), ('video', '视频')]) FButton(variant: _kind == kind.$1 ? FButtonVariant.primary : FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, onPress: _managing ? null : () => setState(() { _kind = kind.$1; _selected.clear(); _selecting = false; }), child: Text(kind.$2)),
             if (_kind == 'image' || _kind == 'favorite') FButton(variant: FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, prefix: const Icon(FLucideIcons.listChecks, size: 15), onPress: _managing ? null : () => setState(() { _selecting = !_selecting; _selected.clear(); }), child: Text(_selecting ? '完成管理' : '批量管理')),
           ]),
           const SizedBox(height: 16), ConstrainedBox(constraints: const BoxConstraints(maxWidth: 400), child: FTextField(hint: '搜索作品、模型或提示词', prefixBuilder: (_, _, _) => const Padding(padding: EdgeInsets.only(left: 12), child: Icon(FLucideIcons.search, size: 16)), control: FTextFieldControl.managed(onChange: (value) => setState(() => _keyword = value.text)))),
@@ -125,9 +126,9 @@ class _WorksPageState extends ConsumerState<WorksPage> {
           ])],
         ],
       ]))),
-      if (_tasks) _taskList() else if (_kind == 'video') _videoList() else ref.watch(_kind == 'favorite' ? favoritesProvider : worksProvider).when(
+      if (_tasks) _taskList() else if (_kind == 'video') _videoList() else ref.watch(_images).when(
         loading: () => const SliverFillRemaining(hasScrollBody: false, child: StatePanel(title: '正在读取作品', loading: true)),
-        error: (error, _) => SliverFillRemaining(hasScrollBody: false, child: StatePanel(title: '作品读取失败', description: errorMessage(error), action: FButton(mainAxisSize: MainAxisSize.min, onPress: () => ref.invalidate(_kind == 'favorite' ? favoritesProvider : worksProvider), child: const Text('重新读取')))),
+        error: (error, _) => SliverFillRemaining(hasScrollBody: false, child: StatePanel(title: '作品读取失败', description: errorMessage(error), action: FButton(mainAxisSize: MainAxisSize.min, onPress: () => ref.invalidate(_images), child: const Text('重新读取')))),
         data: (works) {
           final filtered = works.where((work) => '${work.title} ${work.prompt} ${work.model}'.toLowerCase().contains(_keyword.toLowerCase())).toList();
           if (filtered.isEmpty) return SliverFillRemaining(hasScrollBody: false, child: StatePanel(title: works.isEmpty ? _kind == 'favorite' ? '还没有收藏' : '还没有作品' : '没有找到匹配作品', description: works.isEmpty ? _kind == 'favorite' ? '收藏喜欢的灵感，独立副本会保存在这里。' : '完成第一次创作，你的作品会出现在这里。' : '试试其他关键词。', action: works.isEmpty ? FButton(mainAxisSize: MainAxisSize.min, onPress: () => context.go(_kind == 'favorite' ? '/explore' : '/create'), child: Text(_kind == 'favorite' ? '探索灵感' : '开始创作')) : null));

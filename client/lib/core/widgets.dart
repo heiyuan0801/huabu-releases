@@ -41,7 +41,7 @@ class AccountGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => ref.watch(sessionProvider).when(
     loading: () => const StatePanel(title: '正在读取账号', loading: true),
     error: (error, _) => StatePanel(title: '账号读取失败', description: errorMessage(error), action: FButton(mainAxisSize: MainAxisSize.min, onPress: () => ref.invalidate(sessionProvider), child: const Text('重新读取'))),
-    data: (user) => user == null ? StatePanel(title: '登录后，开始你的创作', description: '作品与素材随账号同步，在不同设备接续灵感。', action: FButton(mainAxisSize: MainAxisSize.min, onPress: () => context.go('/login'), child: const Text('登录账号'))) : KeyedSubtree(key: ValueKey(user.id), child: child),
+    data: (user) => user == null ? StatePanel(title: '登录后，开始你的创作', description: '新生成图片按日期保存在本机，账号与任务通过服务端核对。', action: FButton(mainAxisSize: MainAxisSize.min, onPress: () => context.go('/login'), child: const Text('登录账号'))) : KeyedSubtree(key: ValueKey(user.id), child: child),
   );
 }
 
@@ -61,7 +61,10 @@ class ServerImage extends ConsumerWidget {
         return Image.memory(image.bytes, fit: fit, cacheWidth: decodeWidth, gaplessPlayback: true, errorBuilder: (_, _, _) => const Center(child: Text('图片无法显示')));
       }),
       loading: () => ColoredBox(color: context.theme.colors.muted, child: const Center(child: FCircularProgress())),
-      error: (error, _) => Center(child: FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '重新加载图片', onPress: () => ref.invalidate(imageProvider(source)), child: const Icon(FLucideIcons.imageOff))),
+      error: (error, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '重新加载图片', onPress: () => ref.invalidate(imageProvider(source)), child: const Icon(FLucideIcons.imageOff)),
+        if (source.startsWith('huabu-local:')) Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text(fit == BoxFit.contain ? errorMessage(error) : '本机图片无法读取', maxLines: 3, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: context.theme.typography.body.xs)),
+      ])),
     );
   }
 }
@@ -130,7 +133,7 @@ Future<void> exportImage(BuildContext context, WidgetRef ref, Artwork work) asyn
   final api = ref.read(apiProvider);
   final epoch = api.epoch;
   try {
-    final media = await api.file(work.imageUrl);
+    final media = await ref.read(imageProvider(work.imageUrl).future);
     api.assertEpoch(epoch);
     final extension = switch (media.mimeType) {'image/jpeg' => 'jpg', 'image/webp' => 'webp', 'image/gif' => 'gif', _ => 'png'};
     final name = 'huabu-${work.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')}.$extension';
@@ -162,7 +165,7 @@ Future<void> exportImages(BuildContext context, WidgetRef ref, List<Artwork> wor
     final files = <XFile>[], names = <String>[];
     for (final work in works) {
       api.assertEpoch(epoch);
-      final image = await api.file(work.imageUrl);
+      final image = await ref.read(imageProvider(work.imageUrl).future);
       api.assertEpoch(epoch);
       final extension = switch (image.mimeType) {'image/jpeg' => 'jpg', 'image/webp' => 'webp', 'image/gif' => 'gif', _ => 'png'};
       final name = 'huabu-${const Uuid().v4()}.$extension';

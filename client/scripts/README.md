@@ -28,7 +28,7 @@ Windows 主机需要 Flutter 和含 Desktop development with C++ 的 Visual Stud
 ./scripts/package-windows.ps1 -Arch x64
 ```
 
-脚本生成包含 EXE、DLL、data 的完整便携 ZIP。若已安装 Inno Setup 6 并能找到 `ISCC.exe`，同时生成每用户安装 EXE，供实际安装和 WinSparkle 更新使用。未安装 Inno Setup 时只生成 ZIP，并明确提示没有自动更新安装器。`-PackageOnly` 可打包已经构建的 bundle。ARM64 构建需相应 Windows ARM64 工具链。
+脚本生成包含 EXE、DLL、data 的完整便携 ZIP。若已安装 Inno Setup 6 并能找到 `ISCC.exe`，同时生成每用户安装 EXE，供实际安装和 WinSparkle 更新使用。安装器默认勾选「创建桌面快捷方式」，可取消；升级沿用上次任务选择，快捷方式指向安装目录中的程序并使用应用图标，卸载时由安装器清理。便携 ZIP 不自动创建快捷方式。未安装 Inno Setup 时只生成 ZIP，并明确提示没有自动更新安装器。`-PackageOnly` 可打包已经构建的 bundle。ARM64 构建需相应 Windows ARM64 工具链。
 
 Windows 构建前可将 `WS_DSA_PUBLIC_KEY` 设为已生成的 DSA **公钥 PEM 文件路径**，脚本只把公钥复制为工程更新资源；不生成、读取或复制私钥。使用 WinSparkle 官方 `sign_update.bat` 签名实际安装 EXE，私钥保留在开发者的安全位置，签名输出另存为公开的签名文本文件。
 

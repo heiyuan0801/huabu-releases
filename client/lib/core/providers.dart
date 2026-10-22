@@ -13,12 +13,13 @@ import 'database.dart';
 import 'models.dart';
 import 'repository.dart';
 import '../features/channels/channel_providers.dart';
+import '../features/works/local_image_store.dart';
 
 export 'api/api_client.dart';
 export 'models.dart';
 
 const apiOrigin = String.fromEnvironment('API_BASE_URL', defaultValue: 'https://image.iyuns.com');
-String errorMessage(Object error) => error is ApiException ? error.message : error is PlatformException && error.code == 'Unexpected security result code' ? '系统安全存储读取失败，请处理钥匙串授权后重新读取' : error is FormatException ? '服务器数据格式异常，请重试' : '操作未完成，请重试';
+String errorMessage(Object error) => error is ApiException ? error.message : error is PlatformException && error.code == 'Unexpected security result code' ? '系统安全存储读取失败，请处理钥匙串授权后重新读取' : error is PlatformException && error.code == 'image_folder' ? '无法访问本机图片目录，请重新选择原文件夹授权' : error is FormatException ? '读取的数据格式异常，请重试并保留原数据' : '操作未完成，请重试';
 
 final apiProvider = Provider<ApiClient>((ref) {
   final api = ApiClient(baseUrl: '${apiOrigin.replaceFirst(RegExp(r'/+$'), '')}/api');
@@ -31,7 +32,18 @@ final databaseProvider = Provider<AppDatabase>((ref) {
   ref.onDispose(database.close);
   return database;
 });
-final repositoryProvider = Provider((ref) => HuabuRepository(ref.watch(apiProvider)));
+final localImageDatabaseProvider = Provider((ref) {
+  final database = LocalImageDatabase();
+  ref.onDispose(database.close);
+  return database;
+});
+final localImageStoreProvider = Provider((ref) => LocalImageStore(ref.watch(apiProvider), ref.watch(localImageDatabaseProvider), ref.watch(databaseProvider)));
+final imageFolderProvider = FutureProvider((ref) async {
+  await _signedIn(ref);
+  return ref.watch(localImageStoreProvider).folder();
+});
+final repositoryProvider = Provider((ref) => HuabuRepository(ref.watch(apiProvider), localImages: ref.watch(localImageStoreProvider)));
+Future<MediaBytes> readArtworkMedia(Ref ref, String source) => LocalImageStore.isLocal(source) ? ref.read(localImageStoreProvider).read(source) : ref.read(apiProvider).file(source);
 final siteProvider = FutureProvider((ref) async => SiteData.fromJson(await ref.watch(apiProvider).get('/site')));
 
 final sessionProvider = AsyncNotifierProvider<SessionController, UserAccount?>(SessionController.new,
@@ -216,6 +228,16 @@ final worksProvider = FutureProvider<List<Artwork>>((ref) async {
   await _signedIn(ref);
   return repository.works();
 });
+final serverImageHistoryProvider = FutureProvider<List<Artwork>>((ref) async {
+  await _signedIn(ref);
+  final api = ref.watch(apiProvider), epoch = ref.read(apiProvider).epoch;
+  final repository = ref.watch(repositoryProvider);
+  final works = await repository.serverWorks();
+  api.assertEpoch(epoch);
+  final favorites = await repository.serverFavorites();
+  api.assertEpoch(epoch);
+  return [...works, ...favorites]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+});
 final assetsProvider = FutureProvider<List<AssetItem>>((ref) async {
   final repository = ref.watch(repositoryProvider);
   await _signedIn(ref);
@@ -223,7 +245,7 @@ final assetsProvider = FutureProvider<List<AssetItem>>((ref) async {
 });
 final imageProvider = FutureProvider.autoDispose.family<MediaBytes, String>((ref, source) {
   ref.watch(sessionProvider.select((session) => session.asData?.value?.id));
-  return ref.watch(apiProvider).file(source);
+  return readArtworkMedia(ref, source);
 });
 final imageSizeProvider = FutureProvider.autoDispose.family<ui.Size, String>((ref, source) async {
   final media = await ref.watch(imageProvider(source).future);

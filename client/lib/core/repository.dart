@@ -2,19 +2,23 @@ import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:uuid/uuid.dart';
-import 'package:crypto/crypto.dart';
 
 import 'api/api_client.dart';
 import 'models.dart';
 import '../features/generation/generation_service.dart';
+import '../features/works/local_image_store.dart';
 
 class HuabuRepository {
-  HuabuRepository(this.api);
+  HuabuRepository(this.api, {this.localImages});
   final ApiClient api;
+  final LocalImageStore? localImages;
+  LocalImageStore get _local => localImages ?? (throw const ApiException('本机图片存储尚未初始化'));
+  Future<List<Artwork>> works() => _local.works();
+  Future<List<Artwork>> favorites() => _local.works(favorites: true);
   static const _uuid = Uuid();
   static const _assetKey = 'infinite-canvas:asset_store';
 
-  Future<List<Artwork>> works() async {
+  Future<List<Artwork>> serverWorks() async {
     final epoch = api.epoch;
     final works = <Artwork>[];
     for (final key in await api.storageKeys('image_generation_logs')) {
@@ -27,7 +31,7 @@ class HuabuRepository {
     return works;
   }
 
-  Future<List<Artwork>> favorites() async {
+  Future<List<Artwork>> serverFavorites() async {
     final epoch = api.epoch;
     final result = <Artwork>[];
     for (final key in await api.storageKeys('artwork_favorites')) {
@@ -44,28 +48,23 @@ class HuabuRepository {
 
   Future<void> saveFavorite(Artwork work) async {
     final epoch = api.epoch;
-    final key = sha256.convert(utf8.encode('${work.source}:${work.id}:${work.imageUrl}')).toString();
-    final existing = await api.storageRead('artwork_favorites', key);
+    final image = LocalImageStore.isLocal(work.imageUrl) ? await _local.read(work.imageUrl) : await api.file(work.imageUrl);
     api.assertEpoch(epoch);
-    if (existing != null) {
-      if (existing.blob || existing.value is! Map) throw const ApiException('收藏记录格式异常，已停止保存');
-      return;
-    }
-    final image = await api.file(work.imageUrl);
-    api.assertEpoch(epoch);
-    final stored = await _storeImage(image, epoch);
-    final value = {...work.toJson(), 'fileKey': stored['storageKey'], 'imageUrl': mediaFilePath(stored['storageKey'] as String), 'width': stored['width'], 'height': stored['height'], 'bytes': stored['bytes'], 'mimeType': stored['mimeType'], 'source': 'favorite', 'recordKey': key, 'createdAt': DateTime.now().toIso8601String()};
-    await api.storageWrite('artwork_favorites', key, value, revision: '0');
+    await _local.favorite(work, image);
     api.assertEpoch(epoch);
   }
 
   Future<void> removeWorks(List<Artwork> works) async {
     final epoch = api.epoch;
+    for (final work in works.where((work) => LocalImageStore.isLocal(work.imageUrl))) {
+      api.assertEpoch(epoch);
+      await _local.remove(work);
+    }
     for (final work in works.where((work) => work.source == 'favorite')) {
       api.assertEpoch(epoch);
       await api.storageDelete('artwork_favorites', work.recordKey);
     }
-    final keys = works.where((work) => work.source != 'favorite').map((work) => work.recordKey).where((key) => key.isNotEmpty).toSet();
+    final keys = works.where((work) => work.source != 'favorite' && !LocalImageStore.isLocal(work.imageUrl)).map((work) => work.recordKey).where((key) => key.isNotEmpty).toSet();
     for (final key in keys) {
       api.assertEpoch(epoch);
       final record = await api.storageRead('image_generation_logs', key);
@@ -95,51 +94,7 @@ class HuabuRepository {
     return {'storageKey': key, 'dataUrl': '', 'width': width, 'height': height, 'bytes': image.bytes.length, 'mimeType': image.mimeType};
   }
 
-  Future<List<Artwork>> saveGeneration(GenerationOutput output) async {
-    final epoch = api.epoch;
-    final existing = await api.storageRead('image_generation_logs', output.runId);
-    api.assertEpoch(epoch);
-    if (existing != null && (existing.blob || existing.value is! Map || (existing.value as Map)['images'] is! List || ((existing.value as Map)['images'] as List).any((image) => image is! Map))) {
-      throw const ApiException('作品记录格式异常，已停止保存以保护服务器数据');
-    }
-    final previous = existing == null ? <String, dynamic>{} : jsonObject(existing.value);
-    final images = (previous['images'] as List? ?? []).map(jsonObject).toList();
-    final hashes = <String>{};
-    for (final image in images) {
-      api.assertEpoch(epoch);
-      var hash = jsonString(image['sha256']);
-      if (hash.isEmpty && jsonString(image['storageKey']).isNotEmpty) {
-        final media = await api.file(mediaFilePath(image['storageKey'] as String));
-        hash = sha256.convert(media.bytes).toString();
-        image['sha256'] = hash;
-      }
-      if (hash.isNotEmpty) hashes.add(hash);
-    }
-    for (final image in output.images) {
-      api.assertEpoch(epoch);
-      final hash = sha256.convert(image.bytes).toString();
-      if (!hashes.add(hash)) continue;
-      final stored = await _storeImage(image, epoch);
-      images.add({...stored, 'id': _uuid.v4(), 'sha256': hash, 'durationMs': output.run?.durationMs ?? 0});
-    }
-    api.assertEpoch(epoch);
-    final now = existing == null ? output.run?.createdAt ?? DateTime.now() : jsonDate(previous['createdAt']);
-    final log = <String, dynamic>{
-      ...previous,
-      'id': output.runId, 'runId': output.runId, 'createdAt': now.millisecondsSinceEpoch,
-      'title': output.prompt, 'prompt': output.prompt, 'model': output.model,
-      'time': now.toIso8601String(), 'size': output.ratio, 'quality': output.quality,
-      'config': {'model': output.model, 'imageModel': output.model, 'size': output.ratio, 'quality': output.quality, 'count': '${output.requestedCount}'},
-      'references': [], 'durationMs': output.run?.durationMs ?? 0,
-      'successCount': images.length, 'failCount': 0,
-      'imageCount': output.requestedCount, 'status': output.partial ? 'partial' : 'success',
-      'partial': output.partial, 'notice': output.notice,
-      'images': images, 'thumbnails': [],
-    };
-    await api.storageWrite('image_generation_logs', output.runId, log, revision: existing?.revision ?? '0');
-    api.assertEpoch(epoch);
-    return Artwork.fromGenerationLog(log, output.runId);
-  }
+  Future<List<Artwork>> saveGeneration(GenerationOutput output) async => _local.saveGeneration(output);
 
   Future<(Json, String)> _assetDocument(int epoch) async {
     api.assertEpoch(epoch);

@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/providers.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
+import 'local_image_store.dart';
 
 class ArtworkDetailPage extends ConsumerStatefulWidget {
   const ArtworkDetailPage({required this.artwork, super.key});
@@ -35,13 +36,13 @@ class _ArtworkDetailPageState extends ConsumerState<ArtworkDetailPage> {
     if (account.id != api.accountId) return;
     setState(() => _busy = 'asset');
     try {
-      final image = await api.file(widget.artwork.imageUrl);
+      final image = await ref.read(imageProvider(widget.artwork.imageUrl).future);
       api.assertEpoch(epoch);
       await ref.read(repositoryProvider).addImageAsset(image, widget.artwork.title.isEmpty ? '灵感作品' : widget.artwork.title);
       api.assertEpoch(epoch);
       if (mounted && _current(operation, epoch)) {
         ref.invalidate(assetsProvider);
-        toast(context, '已保存到个人素材');
+        toast(context, '已上传到个人素材');
       }
     } catch (error) {
       if (mounted && _current(operation, epoch)) toast(context, errorMessage(error));
@@ -64,7 +65,7 @@ class _ArtworkDetailPageState extends ConsumerState<ArtworkDetailPage> {
     setState(() => _busy = 'favorite');
     try {
       await ref.read(repositoryProvider).saveFavorite(widget.artwork);
-      if (mounted && _current(operation, epoch)) { ref.invalidate(favoritesProvider); toast(context, '已收藏独立作品副本'); }
+      if (mounted && _current(operation, epoch)) { ref.invalidate(favoritesProvider); toast(context, '已收藏到本机，未上传服务器'); }
     } catch (error) { if (mounted && _current(operation, epoch)) toast(context, errorMessage(error)); }
     finally { if (_current(operation, epoch)) setState(() => _busy = ''); }
   }
@@ -100,7 +101,7 @@ class _ArtworkDetailPageState extends ConsumerState<ArtworkDetailPage> {
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 24, children: [
       Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 12, children: [
-        FBadge(variant: FBadgeVariant.secondary, child: Text(work.source == 'published' ? '公开灵感' : work.source == 'favorite' ? '收藏作品' : '我的作品')),
+        FBadge(variant: FBadgeVariant.secondary, child: Text(work.source == 'published' ? '公开灵感' : work.source == 'local-favorite' ? '本机收藏' : work.source == 'favorite' ? '云端历史收藏' : LocalImageStore.isLocal(work.imageUrl) ? '本机图片' : '云端历史图片')),
         Text(work.title.isEmpty ? '无题作品' : work.title, style: theme.typography.display.xl.copyWith(fontWeight: FontWeight.w600, height: 1.5)),
         if (work.description.isNotEmpty) Text(work.description, style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground, height: 1.7)),
       ]),
@@ -115,6 +116,14 @@ class _ArtworkDetailPageState extends ConsumerState<ArtworkDetailPage> {
         for (final field in fields) FTile(title: Text(field.$1), details: Text(field.$2)),
       ]),
       Column(spacing: 12, children: [
+        if (LocalImageStore.isLocal(work.imageUrl)) ...[
+          Text('图片仅保存在本机，请自行备份；从列表移除不会删除磁盘原图。', style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground)),
+          if (AppLayout.isDesktop) FButton(variant: FButtonVariant.secondary, prefix: const Icon(FLucideIcons.folderOpen, size: 16), onPress: _busy.isEmpty ? () async {
+            final epoch = ref.read(apiProvider).epoch;
+            try { await ref.read(localImageStoreProvider).openFolder(work); }
+            catch (error) { if (mounted && ref.read(apiProvider).epoch == epoch) toast(context, errorMessage(error)); }
+          } : null, child: const Text('打开所在文件夹')),
+        ],
         FButton(prefix: const Icon(FLucideIcons.sparkles, size: 16), onPress: _busy.isEmpty && work.prompt.isNotEmpty ? _reuse : null, child: const Text('复用提示词')),
         if (work.source == 'published') FButton(variant: FButtonVariant.secondary, prefix: _busy == 'favorite' ? const FCircularProgress() : const Icon(FLucideIcons.bookmark, size: 16), onPress: _busy.isNotEmpty || session.isLoading ? null : session.asData?.value == null ? () => context.go('/login') : _favorite, child: Text(_busy == 'favorite' ? '正在收藏' : '收藏作品')),
         Row(spacing: 12, children: [
@@ -122,7 +131,7 @@ class _ArtworkDetailPageState extends ConsumerState<ArtworkDetailPage> {
             variant: FButtonVariant.outline,
             prefix: _busy == 'asset' ? const FCircularProgress() : const Icon(FLucideIcons.folderPlus, size: 16),
             onPress: _busy.isNotEmpty || session.isLoading ? null : session.hasError ? () => ref.invalidate(sessionProvider) : session.asData?.value == null ? () => context.go('/login') : _saveAsset,
-            child: Text(_busy == 'asset' ? '保存中' : session.isLoading ? '读取账号' : session.hasError ? '重试账号' : session.asData?.value == null ? '登录后保存' : '保存素材'),
+            child: Text(_busy == 'asset' ? '上传中' : session.isLoading ? '读取账号' : session.hasError ? '重试账号' : session.asData?.value == null ? '登录后上传' : '上传到素材库'),
           )),
           Expanded(child: FButton(variant: FButtonVariant.outline, prefix: _busy == 'export' ? const FCircularProgress() : const Icon(FLucideIcons.download, size: 16), onPress: _busy.isEmpty && work.imageUrl.isNotEmpty ? _export : null, child: Text(_busy == 'export' ? '导出中' : '导出图片'))),
         ]),

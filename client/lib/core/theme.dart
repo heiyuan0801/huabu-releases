@@ -31,6 +31,10 @@ abstract final class AppMotion {
   static const normal = Duration(milliseconds: 200);
   static const page = Duration(milliseconds: 280);
   static const curve = Curves.easeOutCubic;
+  static const launch = Duration(milliseconds: 1200);
+  static const launchExitAt = Duration(milliseconds: 920);
+  static const launchMark = Interval(0, .38, curve: curve);
+  static const launchCopy = Interval(.12, .5, curve: curve);
 }
 
 abstract final class AppTheme {
@@ -40,6 +44,8 @@ abstract final class AppTheme {
   static const creativeGradient = LinearGradient(colors: [blue, accent], begin: Alignment.centerLeft, end: Alignment.centerRight);
   static const imageOverlay = LinearGradient(colors: [Color(0x000B0D14), Color(0xE60B0D14)], begin: Alignment.topCenter, end: Alignment.bottomCenter);
   static const imageForeground = Color(0xFFFFFFFF);
+  static const launchMarkSize = 176.0;
+  static const launchTitleSize = 34.0;
   static const updateBlue = Color(0xFF176BFF);
   static const updateGradient = LinearGradient(colors: [Color(0xFF2C9EFF), Color(0xFF075AFF)], begin: Alignment.topLeft, end: Alignment.bottomRight);
   static const updateDesktopTitleSize = 30.0;
