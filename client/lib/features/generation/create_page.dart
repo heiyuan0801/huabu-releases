@@ -83,7 +83,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
   }
 
   Future<void> _importPrompts() async {
-    final api = ref.read(apiProvider), epoch = ref.read(apiProvider).epoch;
+    final epoch = ref.read(apiProvider).epoch;
     try {
       final file = await openFile(acceptedTypeGroups: const [XTypeGroup(label: '提示词文本', extensions: ['txt'], uniformTypeIdentifiers: ['public.plain-text'])]);
       if (file == null || !_current(epoch)) return;
@@ -93,7 +93,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
       _prompt.text = text.replaceFirst('\uFEFF', '');
       ref.read(promptDraftProvider.notifier).setPrompt(_prompt.text);
       setState(() {});
-    } catch (error) { if (_current(epoch)) toast(context, errorMessage(error)); }
+    } catch (error) { if (mounted && _current(epoch)) toast(context, errorMessage(error)); }
   }
   List<String> get _prompts => _prompt.text.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
 

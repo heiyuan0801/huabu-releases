@@ -12,7 +12,7 @@ import 'package:huabu_app/features/generation/generation_service.dart';
 import 'package:huabu_app/features/works/local_image_store.dart';
 
 class _Preferences extends AppDatabase {
-  _Preferences(this.path);
+  _Preferences(this.path) : super(NativeDatabase.memory());
   String path;
   @override
   Future<String?> readPreference(String key) async => path;

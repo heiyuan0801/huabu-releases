@@ -4,7 +4,7 @@ import 'package:path_provider/path_provider.dart';
 
 /// Device preferences only. Local image metadata has its own account-scoped DB.
 class AppDatabase extends GeneratedDatabase {
-  AppDatabase() : super(driftDatabase(
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(
     name: 'huabu_preferences',
     native: DriftNativeOptions(databaseDirectory: getApplicationSupportDirectory),
   ));

@@ -179,7 +179,7 @@ void main() {
     await controller.generate(_model(), prompt: '测试图片', ratio: '1:1', count: 1, quality: 'auto', asynchronous: false);
     final failed = container.read(generationProvider);
     expect(failed.output?.images.single.bytes, [1, 2, 3]);
-    expect(failed.error, contains('作品保存未完成'));
+    expect(failed.error, contains('本机保存未完成'));
     await controller.saveOutput();
     expect(repository.saves, 2);
     expect(identical(repository.outputs.first, repository.outputs.last), isTrue);
