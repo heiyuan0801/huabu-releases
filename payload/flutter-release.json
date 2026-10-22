@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "version": "0.1.5",
-  "buildNumber": 6,
-  "notes": "# 未来画布 0.1.5\n\n- 更新检查、版本说明和历史更新日志改由本站提供。\n- macOS、Windows 和 Android 安装包增加本站下载入口，保留 GitHub 备用发行渠道。\n- 网页游客与登录用户使用相同的版本资料，可直接检查版本并下载。\n\n本站在发行文件完整同步、摘要与更新签名校验通过后提供新版；同步失败时继续提供上一版。\n\n如果旧版客户端无法连接 GitHub，请先从官网下载本版。安装后，后续更新信息与安装包会从本站读取。\n\nmacOS 提供 Intel / Apple Silicon 通用 DMG 与 ZIP；Windows 提供 x64 安装器与便携 ZIP；Android APK 沿用固定发行签名。iOS 未签名归档仅供开发者签名导出，不能直接安装。\n\nmacOS 尚未完成 Apple 公证，Windows 尚未配置 Authenticode；桌面更新仍由系统更新窗口确认下载安装。\n",
+  "version": "0.1.6",
+  "buildNumber": 7,
+  "notes": "# 未来画布 0.1.6\n\n- 新生成图片与收藏按站点、账号和日期保存在本机，支持自选目录及外置盘；旧云端历史保留。\n- 新增逐项批量生图，支持多条提示词、TXT 导入、停止后续任务和仅重新保存结果。\n- macOS / Windows 增加可跳过的品牌开屏，支持明暗主题及减少动态效果。\n- Windows 安装器默认勾选桌面快捷方式，可取消并记住上次选择。\n- 更新检查、日志与下载继续使用本站镜像，GitHub 保留发行来源。\n\n请自行备份本机图片，队列和未保存结果仅在当前运行中保留。视频及主动上传素材沿用既有存储。\n\nmacOS 提供 Intel / Apple Silicon 通用 DMG 与 ZIP；Windows 提供 x64 安装器和便携 ZIP；Android 使用固定正式签名。iOS 仅为未签名开发归档，不能直接安装。\n\nmacOS 尚未完成 Apple Developer ID 公证，Windows 尚未进行 Authenticode 签名；更新签名不替代操作系统发行身份签名。\n",
   "downloads": {
-    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.5/huabu-0.1.5%2B6-macos.dmg",
-    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.5/huabu-0.1.5%2B6-windows-x64-setup.exe",
-    "android": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.5/huabu-0.1.5%2B6-android-universal.apk"
+    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.6/huabu-0.1.6%2B7-macos.dmg",
+    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.6/huabu-0.1.6%2B7-windows-x64-setup.exe",
+    "android": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.6/huabu-0.1.6%2B7-android-universal.apk"
   },
   "appcasts": {
-    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.5/appcast-macos.xml",
-    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.5/appcast-windows.xml"
+    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.6/appcast-macos.xml",
+    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.6/appcast-windows.xml"
   }
 }
