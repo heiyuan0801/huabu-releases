@@ -1,0 +1,1 @@
+macOS Release 包；脚本不执行 Developer ID 签名、公证或更新签名。

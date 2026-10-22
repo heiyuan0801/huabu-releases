@@ -1,0 +1,2 @@
+d36d8c2afcfb8ec59ed5ab77bb612895ff7e56fdb5294a4a4b26545607940b03  ./huabu-0.1.6+7-macos.zip
+28e00aebdb0a2bcdebd95f3d5f1cdd96a2a48175adc85bd13ff4c9c0e1d870ba  ./huabu-0.1.6+7-macos.dmg
