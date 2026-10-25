@@ -1,2 +1,2 @@
-c433d2ea659211198a2c7b39b5a34bf3c2cfa17db95e4e7f64a03f9090d6c435  huabu-0.1.6+7-windows-x64-setup.exe
-aacda2c03240e7ae735b170973ea219a5725b92b301ec4e824f00ab43715ee03  huabu-0.1.6+7-windows-x64.zip
+e7e599089b552091a95ceef24db15b45eb0d21a034ed9e684ae7c7a172d7d705  huabu-0.1.7+8-windows-x64-setup.exe
+6484f2cf7281dcdd3ab57bd1bb7a2056fe0c58bc2e40e6fa8789e72fb241c3e9  huabu-0.1.7+8-windows-x64.zip
