@@ -1,2 +1,2 @@
-Source commit: e5bbebe116553f5bd4e712eab91b4af9916b3479
-Run: https://github.com/heiyuan0801/huabu-releases/actions/runs/39751248124
+Source commit: a432c3d0854741befc0877385cd6079db3993da3
+Run: https://github.com/heiyuan0801/huabu-releases/actions/runs/40165995254
