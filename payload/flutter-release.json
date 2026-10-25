@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "version": "0.1.6",
-  "buildNumber": 7,
-  "notes": "# 未来画布 0.1.6\n\n- 新生成图片与收藏按站点、账号和日期保存在本机，支持自选目录及外置盘；旧云端历史保留。\n- 新增逐项批量生图，支持多条提示词、TXT 导入、停止后续任务和仅重新保存结果。\n- macOS / Windows 增加可跳过的品牌开屏，支持明暗主题及减少动态效果。\n- Windows 安装器默认勾选桌面快捷方式，可取消并记住上次选择。\n- 更新检查、日志与下载继续使用本站镜像，GitHub 保留发行来源。\n\n请自行备份本机图片，队列和未保存结果仅在当前运行中保留。视频及主动上传素材沿用既有存储。\n\nmacOS 提供 Intel / Apple Silicon 通用 DMG 与 ZIP；Windows 提供 x64 安装器和便携 ZIP；Android 使用固定正式签名。iOS 仅为未签名开发归档，不能直接安装。\n\nmacOS 尚未完成 Apple Developer ID 公证，Windows 尚未进行 Authenticode 签名；更新签名不替代操作系统发行身份签名。\n",
+  "version": "0.1.7",
+  "buildNumber": 8,
+  "notes": "## 本次更新\n\n- 新增独立批量生图工作台：逐项编辑、排序和移除提示词，支持多行粘贴与 TXT 导入，共享模型和出图参数。\n- 新增图片创作画布：文字与图片节点、引用连线、平移缩放、多选、撤销重做、模型选择及逐项生成结果回填。\n- 支持本机图片导入、从本机作品添加图片，以及画布结构 JSON 导出。\n- 画布结构按登录账号保存，带版本冲突保护；原图按账号和日期仅保存在本机，不上传图片文件。\n\n## 使用说明\n\n- 批量任务逐项执行，失败后继续下一项，不自动重新生成；停止只影响未提交项。保存失败时可在批量页仅重试保存。\n- 画布修改需手动保存；未保存草稿、生成队列和未落盘结果仅在当前应用进程中保留。请自行备份本机原图，结构 JSON 不包含图片文件。\n- 本版不包含团队画布管理、视频与高级节点编辑或完整 LibTV Agent；其他已有节点按只读方式保留。\n- macOS 自动化辅助功能输入出现过调试断言，普通原生按键可输入，完整输入交互及各平台真机业务仍待验收。\n- macOS 包尚未完成 Developer ID 公证，Windows 尚未配置 Authenticode；iOS 文件为供开发者签名的未签名归档，不能直接安装。Android 正式包沿用既有发行证书。\n",
   "downloads": {
-    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.6/huabu-0.1.6%2B7-macos.dmg",
-    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.6/huabu-0.1.6%2B7-windows-x64-setup.exe",
-    "android": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.6/huabu-0.1.6%2B7-android-universal.apk"
+    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.7/huabu-0.1.7%2B8-macos.dmg",
+    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.7/huabu-0.1.7%2B8-windows-x64-setup.exe",
+    "android": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.7/huabu-0.1.7%2B8-android-universal.apk"
   },
   "appcasts": {
-    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.6/appcast-macos.xml",
-    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.6/appcast-windows.xml"
+    "macos": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.7/appcast-macos.xml",
+    "windows": "https://github.com/heiyuan0801/huabu-releases/releases/download/client-v0.1.7/appcast-windows.xml"
   }
 }
