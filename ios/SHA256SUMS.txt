@@ -1,1 +1,1 @@
-75405154a4ebbd48523518e88e4bca3bfb4c1844f81018b031d8f39bb6bf2691  ./huabu-0.1.6+7-ios-unsigned.xcarchive.zip
+755600a82329b59941f52adc7393315dd805d43270eed3847a86a344afd57482  ./huabu-0.1.7+8-ios-unsigned.xcarchive.zip
