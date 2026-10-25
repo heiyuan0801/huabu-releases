@@ -13,6 +13,7 @@ import '../features/auth/login_page.dart';
 import '../features/affiliate/affiliate_page.dart';
 import '../features/explore/explore_page.dart';
 import '../features/generation/create_page.dart';
+import '../features/canvas/canvas_page.dart';
 import '../features/works/works_page.dart';
 import '../features/works/artwork_detail_page.dart';
 import '../features/assets/assets_page.dart';
@@ -41,7 +42,9 @@ final routerProvider = Provider((ref) {
       : const FScaffold(child: StatePanel(title: '请从作品列表打开作品'))),
     ShellRoute(builder: (_, state, child) => WorkspaceShell(location: state.uri.path, child: child), routes: [
       GoRoute(path: '/explore', pageBuilder: (context, state) => _page(context, state, const ExplorePage())),
-      GoRoute(path: '/create', pageBuilder: (context, state) => _page(context, state, const AccountGate(child: CreatePage()))),
+      GoRoute(path: '/create', pageBuilder: (context, state) => _page(context, state, const AccountGate(child: CreatePage(initialBatchMode: false)))),
+      GoRoute(path: '/batch', pageBuilder: (context, state) => _page(context, state, const AccountGate(child: CreatePage(initialBatchMode: true)))),
+      GoRoute(path: '/canvas', pageBuilder: (context, state) => _page(context, state, const AccountGate(child: CanvasPage()))),
       GoRoute(path: '/video', pageBuilder: (context, state) => _page(context, state, const AccountGate(child: VideoPage()))),
       GoRoute(path: '/video/work', pageBuilder: (context, state) => _page(context, state, AccountGate(child: state.extra is VideoWork ? VideoDetailPage(work: state.extra as VideoWork) : const StatePanel(title: '请从作品列表打开视频')))),
       GoRoute(path: '/chat', pageBuilder: (context, state) => _page(context, state, const AccountGate(child: ChatPage()))),

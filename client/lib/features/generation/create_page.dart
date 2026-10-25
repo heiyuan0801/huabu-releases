@@ -17,7 +17,8 @@ import '../catalog/catalog_providers.dart';
 import '../channels/channel_providers.dart';
 
 class CreatePage extends ConsumerStatefulWidget {
-  const CreatePage({super.key});
+  const CreatePage({super.key, this.initialBatchMode});
+  final bool? initialBatchMode;
   @override
   ConsumerState<CreatePage> createState() => _CreatePageState();
 }
@@ -30,6 +31,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
   String _ratio = '1:1', _quality = 'auto';
   bool _asynchronous = false, _imageMode = false, _dragging = false, _batchMode = false;
   ImageReference? _reference;
+  (int, TextEditingValue)? _editedPrompt;
   String _resultRunId = '';
   int _selectedResult = 0;
 
@@ -42,8 +44,8 @@ class _CreatePageState extends ConsumerState<CreatePage> {
     _count = TextEditingController(text: draft.count);
     _modelId = draft.modelId;
     _ratio = draft.ratio; _quality = draft.quality;
-    _asynchronous = draft.asynchronous; _imageMode = draft.imageMode; _reference = draft.reference; _batchMode = draft.batchMode;
-    _count.addListener(_saveDraft);
+    _asynchronous = draft.asynchronous; _imageMode = draft.imageMode; _reference = draft.reference; _batchMode = widget.initialBatchMode ?? draft.batchMode;
+    _count.addListener(_countChanged);
   }
 
   @override
@@ -51,6 +53,10 @@ class _CreatePageState extends ConsumerState<CreatePage> {
 
   void _saveDraft() {
     if (mounted && ref.read(apiProvider).epoch == _draftEpoch) ref.read(imageDraftProvider.notifier).setDraft(ImageDraft(modelId: _modelId, ratio: _ratio, quality: _quality, count: _count.text, asynchronous: _asynchronous, imageMode: _imageMode, batchMode: _batchMode, reference: _reference));
+  }
+  void _countChanged() {
+    _saveDraft();
+    if (mounted) setState(() {});
   }
   void _update(VoidCallback action) {
     if (!mounted || ref.read(apiProvider).epoch != _draftEpoch) return;
@@ -68,7 +74,7 @@ class _CreatePageState extends ConsumerState<CreatePage> {
       api.assertEpoch(epoch);
       final mime = lookupMimeType(file.name, headerBytes: bytes);
       if (!['image/png', 'image/jpeg', 'image/webp'].contains(mime)) throw const ApiException('请选择 PNG、JPEG 或 WebP 图片');
-      if (_current(epoch)) _update(() { _reference = ImageReference(bytes: bytes, mimeType: mime!, filename: file.name); _imageMode = true; });
+      if (_current(epoch) && !ref.read(generationProvider).working) _update(() { _reference = ImageReference(bytes: bytes, mimeType: mime!, filename: file.name); _imageMode = true; });
     } catch (error) { if (mounted && _current(epoch)) toast(context, errorMessage(error)); }
     finally { if (accessed && bookmark != null) await DesktopDrop.instance.stopAccessingSecurityScopedResource(bookmark: bookmark); }
   }
@@ -90,12 +96,21 @@ class _CreatePageState extends ConsumerState<CreatePage> {
       final text = await file.readAsString();
       if (!_current(epoch)) return;
       if (ref.read(generationProvider).working) return;
-      _prompt.text = text.replaceFirst('\uFEFF', '');
+      _editedPrompt = null;
+      _prompt.text = text.replaceFirst('\uFEFF', '').replaceAll('\r\n', '\n').replaceAll('\r', '\n');
       ref.read(promptDraftProvider.notifier).setPrompt(_prompt.text);
       setState(() {});
     } catch (error) { if (mounted && _current(epoch)) toast(context, errorMessage(error)); }
   }
   List<String> get _prompts => _prompt.text.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
+
+  void _setPromptLines(List<String> lines) {
+    if (!mounted || ref.read(apiProvider).epoch != _draftEpoch || ref.read(generationProvider).working) return;
+    _editedPrompt = null;
+    _prompt.text = lines.join('\n');
+    ref.read(promptDraftProvider.notifier).setPrompt(_prompt.text);
+    setState(() {});
+  }
 
   void _generate(List<ImageModel> models) {
     if (!mounted || ref.read(apiProvider).epoch != _draftEpoch) return;
@@ -127,22 +142,30 @@ class _CreatePageState extends ConsumerState<CreatePage> {
     });
     _modelId ??= ref.watch(defaultModelProvider).asData?.value;
     if (_resultRunId != (state.output?.runId ?? '')) { _resultRunId = state.output?.runId ?? ''; _selectedResult = 0; }
+    Widget catalogState(Widget panel) => state.batch.isEmpty && state.output == null && state.error.isEmpty && !state.busy
+        ? panel : SingleChildScrollView(padding: const EdgeInsets.all(AppSpace.xl), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: AppSpace.lg, children: [
+          panel,
+          if (state.batchRunning && state.batch.any((item) => item.status == BatchImageStatus.queued)) FButton(variant: FButtonVariant.outline, onPress: state.stopRequested ? null : ref.read(generationProvider.notifier).stopBatch, child: Text(state.stopRequested ? '当前项完成后停止' : '停止后续任务')),
+          if (state.batch.isNotEmpty) _batchResults(state) else _results(state),
+        ]));
     return models.when(
-      loading: () => const StatePanel(title: '正在读取可用模型', loading: true),
-      error: (error, _) => StatePanel(title: '模型读取失败', description: errorMessage(error), action: FButton(mainAxisSize: MainAxisSize.min, onPress: () => refreshCatalog(ref), child: const Text('重新读取'))),
+      loading: () => catalogState(const StatePanel(title: '正在读取可用模型', loading: true)),
+      error: (error, _) => catalogState(StatePanel(title: '模型读取失败', description: errorMessage(error), action: FButton(mainAxisSize: MainAxisSize.min, onPress: () => refreshCatalog(ref), child: const Text('重新读取')))),
       data: (models) => models.isEmpty
-        ? StatePanel(title: issues.isEmpty ? '暂时没有可用图片模型' : '图片模型目录尚未完整读取', description: issues.isEmpty ? '请在渠道设置中添加个人接口，或联系管理员开放图片模型。' : issues.entries.map((entry) => '${entry.key}：${entry.value}').join('\n'), icon: FLucideIcons.box, action: issues.isEmpty ? null : FButton(mainAxisSize: MainAxisSize.min, onPress: () => refreshCatalog(ref), child: const Text('重试目录')))
+        ? catalogState(StatePanel(title: issues.isEmpty ? '暂时没有可用图片模型' : '图片模型目录尚未完整读取', description: issues.isEmpty ? '请在渠道设置中添加个人接口，或联系管理员开放图片模型。' : issues.entries.map((entry) => '${entry.key}：${entry.value}').join('\n'), icon: FLucideIcons.box, action: issues.isEmpty ? null : FButton(mainAxisSize: MainAxisSize.min, onPress: () => refreshCatalog(ref), child: const Text('重试目录'))))
         : CallbackShortcuts(
             bindings: {const SingleActivator(LogicalKeyboardKey.enter, control: true): () => _generate(models), const SingleActivator(LogicalKeyboardKey.enter, meta: true): () => _generate(models)},
             child: LayoutBuilder(builder: (context, bounds) {
               final desktop = AppLayout.isDesktop;
               final width = desktop && bounds.maxWidth < 920 ? 920.0 : bounds.maxWidth;
               final workspace = Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 24, children: [
-                Row(children: [Text('AI 生图', style: context.theme.typography.display.xl2), const Spacer(), FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '查看生成记录', semanticsTooltip: '查看生成记录', onPress: () => context.go('/works'), child: const Icon(FLucideIcons.history, size: 17))]),
+                Row(children: [Text(_batchMode ? '批量生图' : 'AI 生图', style: context.theme.typography.display.xl2), const Spacer(), FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '查看生成记录', semanticsTooltip: '查看生成记录', onPress: () => context.go('/works'), child: const Icon(FLucideIcons.history, size: 17))]),
                 if (issues.isNotEmpty) ...[for (final entry in issues.entries) FAlert(title: Text('${entry.key}暂时无法读取'), subtitle: Text(entry.value)), FButton(mainAxisSize: MainAxisSize.min, variant: FButtonVariant.ghost, onPress: () => refreshCatalog(ref), child: const Text('重试目录'))],
                 _composer(state, models),
                 if (!desktop) FButton(variant: FButtonVariant.secondary, prefix: const Icon(FLucideIcons.slidersHorizontal, size: 16), onPress: () => _showParameters(models), child: const Text('模型与生成参数')),
-                if (_batchMode && state.batch.isNotEmpty) _batchResults(state) else _results(state),
+                if (state.batch.isNotEmpty) _batchResults(state)
+                else if (_batchMode && state.output == null && !state.busy && state.error.isEmpty) const FCard(child: SizedBox(height: 220, child: StatePanel(title: '批量任务尚未开始', description: '添加提示词并选择共享参数，开始后在这里逐项查看真实结果。', icon: FLucideIcons.layers)))
+                else _results(state),
               ]);
               if (!desktop) return Column(children: [Expanded(child: SingleChildScrollView(padding: const EdgeInsets.all(20), child: workspace)), SafeArea(top: false, child: Padding(padding: const EdgeInsets.fromLTRB(20, 0, 20, 12), child: _operation(models, state)))]);
               return SingleChildScrollView(scrollDirection: Axis.horizontal, child: SizedBox(width: width, height: bounds.maxHeight, child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -160,19 +183,19 @@ class _CreatePageState extends ConsumerState<CreatePage> {
     final supported = imageParameters(model).supported;
     final theme = context.theme;
     return FCard(builder: cardBody, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 20, children: [
-      Row(spacing: 8, children: [
+      Wrap(spacing: 8, runSpacing: 8, children: [
         for (final mode in [(false, '单次创作'), (true, '批量生图')]) FButton(variant: _batchMode == mode.$1 ? FButtonVariant.secondary : FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, onPress: busy || state.hasUnsaved ? null : () => _update(() => _batchMode = mode.$1), child: Text(mode.$2)),
-        const Spacer(),
-        if (_batchMode) FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '导入提示词 TXT', onPress: busy ? null : _importPrompts, child: const Icon(FLucideIcons.fileInput, size: 17)),
+        if (_batchMode) FButton(variant: FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, prefix: const Icon(FLucideIcons.fileInput, size: 16), onPress: busy ? null : _importPrompts, child: const Text('导入 TXT')),
       ]),
       Row(spacing: 8, children: [
         for (final mode in [(false, '文生图'), (true, '图生图')]) FButton(variant: _imageMode == mode.$1 ? FButtonVariant.primary : FButtonVariant.ghost, size: FButtonSizeVariant.sm, mainAxisSize: MainAxisSize.min, onPress: busy || !supported ? null : () => _update(() => _imageMode = mode.$1), child: Text(mode.$2)),
       ]),
-      FTextField.multiline(control: FTextFieldControl.managed(controller: _prompt, onChange: (value) { if (ref.read(apiProvider).epoch == _draftEpoch) { ref.read(promptDraftProvider.notifier).setPrompt(value.text); if (_batchMode) setState(() {}); } }), hint: _batchMode ? '每行一条提示词，空行忽略。也可导入 TXT 文件。\n例如：雨夜街头的蓝色跑车\n例如：暖光下的玻璃香水瓶' : '描述你的想象：主体、光线、色彩，以及每一个细节…', minLines: 4, maxLines: 7, enabled: !busy),
+      if (_batchMode) _batchEditor(state)
+      else FTextField.multiline(control: FTextFieldControl.managed(controller: _prompt, onChange: (value) { if (ref.read(apiProvider).epoch == _draftEpoch) ref.read(promptDraftProvider.notifier).setPrompt(value.text); }), hint: '描述你的想象：主体、光线、色彩，以及每一个细节…', minLines: 4, maxLines: 7, enabled: !busy),
       if (_batchMode) Text('共 ${_prompts.length} 项 · 使用相同模型与参数${_imageMode ? '及参考图' : ''}。逐项执行，失败后继续，不自动重试。请保持应用运行。', style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground)),
       Text('新图片按日期保存到本机；服务器不提供图片备份。保存位置可在个人设置中修改。', style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground)),
       if (_imageMode) DropTarget(
-        enable: AppLayout.isDesktop && !busy && supported && ModalRoute.of(context)?.isCurrent == true && GoRouter.of(context).routeInformationProvider.value.uri.path == '/create',
+        enable: AppLayout.isDesktop && !busy && supported && ModalRoute.of(context)?.isCurrent == true && ['/create', '/batch'].contains(GoRouter.of(context).routeInformationProvider.value.uri.path),
         onDragEntered: (_) => setState(() => _dragging = true), onDragExited: (_) => setState(() => _dragging = false),
         onDragDone: (details) { setState(() => _dragging = false); if (details.files.length == 1) { _readReference(details.files.single); } else { toast(context, '当前模式支持一张参考图片，请选择单张图片'); } },
         child: AnimatedContainer(duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.fast, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: _dragging ? theme.colors.secondary : theme.colors.muted, borderRadius: BorderRadius.circular(AppRadius.md), border: Border.all(color: _dragging ? AppTheme.accent : theme.colors.border)), child: Row(spacing: 14, children: [
@@ -184,6 +207,27 @@ class _CreatePageState extends ConsumerState<CreatePage> {
       ),
       Text('⌘ / Ctrl + Enter 开始生成', style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground)),
     ]));
+  }
+
+  Widget _batchEditor(GenerationState state) {
+    final lines = _prompt.text.split('\n'), busy = state.working;
+    final theme = context.theme;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 14, children: [
+      Row(children: [const Text('提示词清单', style: TextStyle(fontWeight: FontWeight.w600)), const Spacer(), Text('${_prompts.length} 项待生成', style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground))]),
+      SizedBox(height: (lines.length * 86.0).clamp(86.0, 420.0).toDouble(), child: ListView.separated(
+        primary: false, itemCount: lines.length, separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (context, index) => Row(crossAxisAlignment: CrossAxisAlignment.start, spacing: 8, children: [
+          Padding(padding: const EdgeInsets.only(top: 12), child: Text('${index + 1}'.padLeft(2, '0'), style: theme.typography.body.xs.copyWith(color: theme.colors.mutedForeground))),
+          Expanded(child: Semantics(label: '第 ${index + 1} 项提示词', child: FTextField(key: ValueKey('batch-prompt-$index'), control: FTextFieldControl.lifted(value: _editedPrompt?.$1 == index && _editedPrompt?.$2.text == lines[index] ? _editedPrompt!.$2 : TextEditingValue(text: lines[index], selection: TextSelection.collapsed(offset: lines[index].length)), onChange: (value) { final next = [...lines]; next[index] = value.text; _setPromptLines(next); _editedPrompt = (index, value); }), hint: '描述这一项要生成的画面…', minLines: 2, maxLines: 3, keyboardType: TextInputType.text, textInputAction: TextInputAction.done, inputFormatters: [FilteringTextInputFormatter.singleLineFormatter], enabled: !busy))),
+          Column(children: [
+            FButton.icon(variant: FButtonVariant.ghost, size: FButtonSizeVariant.sm, semanticsLabel: '上移第 ${index + 1} 项', onPress: busy || index == 0 ? null : () { final next = [...lines]; final line = next.removeAt(index); next.insert(index - 1, line); _setPromptLines(next); }, child: const Icon(FLucideIcons.arrowUp, size: 14)),
+            FButton.icon(variant: FButtonVariant.ghost, size: FButtonSizeVariant.sm, semanticsLabel: '移除第 ${index + 1} 项', onPress: busy ? null : () { final next = [...lines]..removeAt(index); _setPromptLines(next); }, child: const Icon(FLucideIcons.x, size: 14)),
+          ]),
+        ]),
+      )),
+      FButton(variant: FButtonVariant.outline, prefix: const Icon(FLucideIcons.plus, size: 16), onPress: busy ? null : () => _setPromptLines([...lines, '']), child: const Text('添加一项提示词')),
+      FAccordion(children: [FAccordionItem(title: const Text('批量粘贴 / 编辑文本'), child: FTextField.multiline(control: FTextFieldControl.managed(controller: _prompt, onChange: (value) { if (ref.read(apiProvider).epoch == _draftEpoch) { ref.read(promptDraftProvider.notifier).setPrompt(value.text); setState(() {}); } }), hint: '每行一条提示词，空行不提交。\n雨夜街头的蓝色跑车\n暖光下的玻璃香水瓶', description: const Text('TXT 导入会替换当前清单，生成前可逐项修改或移除。'), minLines: 4, maxLines: 7, enabled: !busy))]),
+    ]);
   }
 
   void _showParameters(List<ImageModel> models) {
@@ -200,7 +244,8 @@ class _CreatePageState extends ConsumerState<CreatePage> {
     final busy = state.working;
     void update(VoidCallback action) { _update(action); refresh?.call(); }
     return FCard(key: const ValueKey('image-parameters'), builder: cardBody, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 20, children: [
-      const Text('模型设置', style: TextStyle(fontWeight: FontWeight.w600)),
+      Text(_batchMode ? '共享生成参数' : '模型设置', style: const TextStyle(fontWeight: FontWeight.w600)),
+      if (_batchMode) Text('下列模型、比例与质量应用于清单中的每一项。', style: context.theme.typography.body.xs.copyWith(color: context.theme.colors.mutedForeground)),
       FSelect<String>.rich(label: const Text('创作模型'), format: (id) => models.firstWhere((model) => model.id == id).name,
         enabled: !busy, control: FSelectControl.lifted(value: selected.id, onChange: (value) => update(() => _modelId = value)),
         children: [for (final model in models) FSelectItem(title: Text('${model.name} · ${model.providerName}'), value: model.id)]),
@@ -222,9 +267,10 @@ class _CreatePageState extends ConsumerState<CreatePage> {
     final count = singleEdit ? 1 : int.tryParse(_count.text);
     return FCard(key: const ValueKey('image-operation'), builder: cardBody, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 12, children: [
       if (singleEdit) Text(_batchMode ? '参考图编辑 · 每项生成 1 张' : '参考图编辑 · 本次生成 1 张') else FTextField(control: FTextFieldControl.managed(controller: _count), label: Text(_batchMode ? '每项生成数量' : '生成数量'), keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], enabled: !busy && parameters.supported),
+      if (_batchMode && count != null && count > 0) Text('${_prompts.length} 项提示词 × 每项 $count 张 · 共请求 ${_prompts.length * count} 张', style: context.theme.typography.body.sm),
       Text(selected.providerId.startsWith('local:') ? '个人渠道 · 由渠道计费' : '${count != null && count > 0 ? '预计 ${selected.creditCost * count * (_batchMode ? _prompts.length : 1)} 算力' : '每张 ${selected.creditCost} 算力'} · 以服务端记录为准', style: context.theme.typography.body.xs.copyWith(color: context.theme.colors.mutedForeground)),
       if (state.hasUnsaved) Text('请先重新保存已生成的图片，再开始新创作。', style: context.theme.typography.body.xs.copyWith(color: context.theme.colors.destructive)),
-      FButton(prefix: busy ? const FCircularProgress() : const Icon(FLucideIcons.sparkles, size: 17), onPress: busy || state.hasUnsaved || !parameters.supported ? null : () => _generate(models), child: Text(state.saving ? '正在保存到本机' : busy ? '正在生成' : _batchMode ? '开始批量生成' : '立即生成')),
+      FButton(prefix: busy ? const FCircularProgress() : const Icon(FLucideIcons.sparkles, size: 17), onPress: busy || state.hasUnsaved || !parameters.supported || (_batchMode && _prompts.isEmpty) ? null : () => _generate(models), child: Text(state.saving ? '正在保存到本机' : busy ? '正在生成' : _batchMode ? '开始批量生成' : '立即生成')),
       if (state.batchRunning && state.batch.any((item) => item.status == BatchImageStatus.queued)) FButton(variant: FButtonVariant.outline, onPress: state.stopRequested ? null : () => ref.read(generationProvider.notifier).stopBatch(), child: Text(state.stopRequested ? '当前项完成后停止' : '停止后续任务')),
     ]));
   }
@@ -233,13 +279,14 @@ class _CreatePageState extends ConsumerState<CreatePage> {
     final completed = state.batch.where((item) => ![BatchImageStatus.queued, BatchImageStatus.generating, BatchImageStatus.saving].contains(item.status)).length;
     final saved = state.batch.fold<int>(0, (count, item) => count + item.works.length);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 16, children: [
-      Row(children: [const Text('批量任务', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)), const Spacer(), Text('$completed / ${state.batch.length} 项 · 已保存 $saved 张', style: context.theme.typography.body.xs)]),
+      Wrap(alignment: WrapAlignment.spaceBetween, spacing: 12, runSpacing: 8, children: [const Text('批量任务', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)), Text('$completed / ${state.batch.length} 项 · 已保存 $saved 张', style: context.theme.typography.body.xs)]),
       FDeterminateProgress(value: completed / state.batch.length, semanticsLabel: '已处理 $completed 项，共 ${state.batch.length} 项'),
       if (state.stopRequested) const FAlert(title: Text('已请求停止后续任务'), subtitle: Text('当前已提交的请求继续接收并保存结果，未执行项不会扣费。')),
       for (var index = 0; index < state.batch.length; index++) FCard(builder: cardBody, child: Builder(builder: (context) {
         final item = state.batch[index];
         return Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 12, children: [
-          Row(spacing: 10, children: [Text('${index + 1}'.padLeft(2, '0'), style: context.theme.typography.body.sm.copyWith(color: context.theme.colors.mutedForeground)), Expanded(child: Text(item.prompt, maxLines: 2, overflow: TextOverflow.ellipsis)), FBadge(variant: FBadgeVariant.secondary, child: Text(item.label))]),
+          Row(spacing: 10, children: [Text('${index + 1}'.padLeft(2, '0'), style: context.theme.typography.body.sm.copyWith(color: context.theme.colors.mutedForeground)), Expanded(child: Text(item.prompt, maxLines: 2, overflow: TextOverflow.ellipsis))]),
+          Align(alignment: Alignment.centerLeft, child: FBadge(variant: FBadgeVariant.secondary, child: Text(item.label))),
           if (item.error.isNotEmpty) Text(item.error, style: context.theme.typography.body.xs.copyWith(color: context.theme.colors.mutedForeground)),
           if (item.status == BatchImageStatus.saveFailed) FButton(variant: FButtonVariant.outline, mainAxisSize: MainAxisSize.min, onPress: state.working ? null : () => ref.read(generationProvider.notifier).saveBatchItem(index), child: const Text('仅重新保存，不重新生成')),
           if (item.output != null) ...[

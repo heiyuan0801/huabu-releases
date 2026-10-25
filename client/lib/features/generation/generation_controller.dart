@@ -79,13 +79,13 @@ class GenerationController extends Notifier<GenerationState> {
   void stopBatch() {
     if (state.batchRunning) _batchState(state.batch, stop: true);
   }
-  Future<void> generateBatch(ImageModel model, {required List<String> prompts, required String ratio, required int count, required String quality, required bool asynchronous, ImageReference? reference}) async {
-    if (state.working || state.hasUnsaved || prompts.isEmpty) return;
+  Future<List<BatchImageItem>> generateBatch(ImageModel model, {required List<String> prompts, required String ratio, required int count, required String quality, required bool asynchronous, ImageReference? reference}) async {
+    if (state.working || state.hasUnsaved || prompts.isEmpty) return const [];
     final api = ref.read(apiProvider), epoch = ref.read(apiProvider).epoch;
     final repository = ref.read(repositoryProvider);
     _batchState(prompts.map((prompt) => BatchImageItem(prompt: prompt)).toList(), running: true, stop: false);
     for (var index = 0; index < prompts.length; index++) {
-      if (!ref.mounted || api.epoch != epoch) return;
+      if (!ref.mounted || api.epoch != epoch) return const [];
       if (state.stopRequested) {
         _batchState([for (final item in state.batch) item.status == BatchImageStatus.queued ? BatchImageItem(prompt: item.prompt, status: BatchImageStatus.stopped) : item]);
         break;
@@ -98,20 +98,23 @@ class GenerationController extends Notifier<GenerationState> {
       GenerationOutput? output;
       try {
         output = await GenerationService(api).generate(model, prompt: prompts[index], ratio: ratio, count: count, quality: quality, reference: reference, asynchronous: asynchronous);
-        if (!ref.mounted || api.epoch != epoch) return;
+        if (!ref.mounted || api.epoch != epoch) return const [];
         update(BatchImageItem(prompt: prompts[index], runId: output.runId, status: BatchImageStatus.saving));
         final works = await repository.saveGeneration(output);
-        if (!ref.mounted || api.epoch != epoch) return;
+        if (!ref.mounted || api.epoch != epoch) return const [];
         update(BatchImageItem(prompt: prompts[index], runId: output.runId, status: output.partial ? BatchImageStatus.partial : BatchImageStatus.saved, works: works, error: output.notice));
       } catch (error) {
-        if (!ref.mounted || api.epoch != epoch) return;
+        if (!ref.mounted || api.epoch != epoch) return const [];
         update(BatchImageItem(prompt: prompts[index], runId: output?.runId ?? (error is GenerationException ? error.runId : ''), status: output == null ? BatchImageStatus.failed : BatchImageStatus.saveFailed, output: output, error: errorMessage(error)));
       }
-      if (!ref.mounted || api.epoch != epoch) return;
+      if (!ref.mounted || api.epoch != epoch) return const [];
       ref.invalidate(worksProvider);
       ref.invalidate(creditsProvider);
     }
-    if (ref.mounted && api.epoch == epoch) _batchState(state.batch, running: false);
+    if (!ref.mounted || api.epoch != epoch) return const [];
+    final completed = state.batch;
+    _batchState(completed, running: false);
+    return completed;
   }
 
   Future<void> saveBatchItem(int index) async {

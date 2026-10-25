@@ -171,6 +171,10 @@ class LocalImageStore {
     _check(epoch);
     return works;
   }
+  Future<Artwork> importImage(MediaBytes image, String title) => _save(image,
+    id: sha256.convert(utf8.encode('import:${sha256.convert(image.bytes)}')).toString(),
+    title: title, prompt: '', model: '', ratio: 'auto', runId: '',
+    date: DateTime.now(), source: 'local-import');
   Future<void> favorite(Artwork work, MediaBytes image) async {
     await _save(image, id: favoriteId(work), title: work.title, prompt: work.prompt, model: work.model, ratio: work.ratio, runId: work.runId, date: DateTime.now(), source: 'local-favorite', original: work);
   }

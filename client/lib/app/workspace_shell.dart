@@ -21,6 +21,8 @@ const _destinations = [
 const _desktopDestinations = [
   (path: '/explore', label: '首页 / 探索', icon: FLucideIcons.house),
   (path: '/create', label: 'AI 生图', icon: FLucideIcons.image),
+  (path: '/batch', label: '批量生图', icon: FLucideIcons.layers),
+  (path: '/canvas', label: '创作画布', icon: FLucideIcons.workflow),
   (path: '/video', label: 'AI 视频', icon: FLucideIcons.video),
   (path: '/chat', label: 'AI 聊天', icon: FLucideIcons.messagesSquare),
   (path: '/models', label: '模型中心', icon: FLucideIcons.layers),
@@ -72,7 +74,7 @@ class _WorkspaceShellState extends ConsumerState<WorkspaceShell> {
       bindings: {
         SingleActivator(LogicalKeyboardKey.keyK, control: !mac, meta: mac): _searchFocus.requestFocus,
         for (var i = 0; i < keys.length; i++)
-          SingleActivator(keys[i], control: !mac, meta: mac): () => context.go(_desktopDestinations[i].path),
+          SingleActivator(keys[i], control: !mac, meta: mac): () => context.go(['/explore', '/create', '/video', '/chat', '/models'][i]),
       },
       child: FScaffold(
         childPad: false,
@@ -94,7 +96,7 @@ class _WorkspaceShellState extends ConsumerState<WorkspaceShell> {
                 ]),
                 footer: _AccountSummary(compact: compact),
                 children: [
-                  for (final range in [(0, 6), (6, _desktopDestinations.length)])
+                  for (final range in [(0, 8), (8, _desktopDestinations.length)])
                     FSidebarGroup(label: compact || range.$1 == 0 ? null : const Text('我的创作'), children: [
                       for (var i = range.$1; i < range.$2; i++)
                         Semantics(label: compact ? _desktopDestinations[i].label : null, child: FSidebarItem(
@@ -116,8 +118,10 @@ class _WorkspaceShellState extends ConsumerState<WorkspaceShell> {
                   padding: const EdgeInsets.fromLTRB(20, 10, 16, 6),
                   child: Row(children: [
                     const Expanded(child: _Brand(compact: true)),
-                    FButton.icon(variant: FButtonVariant.ghost, semanticsLabel: '扫码登录', semanticsTooltip: '扫码登录网页或桌面客户端', onPress: () => context.push('/web-login'), child: const Icon(FLucideIcons.scanLine, size: 18)),
-                    const _ThemeToggle(),
+                    FButton.icon(variant: FButtonVariant.ghost, size: FButtonSizeVariant.sm, semanticsLabel: '批量生图', semanticsTooltip: '批量生图', onPress: () => context.go('/batch'), child: const Icon(FLucideIcons.layers, size: 18)),
+                    FButton.icon(variant: FButtonVariant.ghost, size: FButtonSizeVariant.sm, semanticsLabel: '创作画布', semanticsTooltip: '创作画布', onPress: () => context.go('/canvas'), child: const Icon(FLucideIcons.workflow, size: 18)),
+                    FButton.icon(variant: FButtonVariant.ghost, size: FButtonSizeVariant.sm, semanticsLabel: '扫码登录', semanticsTooltip: '扫码登录网页或桌面客户端', onPress: () => context.push('/web-login'), child: const Icon(FLucideIcons.scanLine, size: 18)),
+                    const _ThemeToggle(compact: true),
                   ]),
                 ),
               ),
@@ -135,7 +139,7 @@ class _WorkspaceShellState extends ConsumerState<WorkspaceShell> {
         child: SafeArea(top: desktop, bottom: false, child: Column(children: [
           const UpdateNotice(),
           Expanded(child: desktop ? Column(children: [
-          Padding(padding: const EdgeInsets.fromLTRB(32, 16, 28, 0), child: Row(spacing: 16, children: [
+          if (widget.location != '/canvas') Padding(padding: const EdgeInsets.fromLTRB(32, 16, 28, 0), child: Row(spacing: 16, children: [
             Expanded(child: Align(alignment: Alignment.centerLeft, child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 460), child: FTextField(
               focusNode: _searchFocus,
               control: FTextFieldControl.managed(controller: _search, onChange: (value) => ref.read(exploreSearchProvider.notifier).setQuery(value.text)),
@@ -177,13 +181,15 @@ class _Brand extends StatelessWidget {
 }
 
 class _ThemeToggle extends ConsumerWidget {
-  const _ThemeToggle();
+  const _ThemeToggle({this.compact = false});
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dark = context.theme.colors.brightness == Brightness.dark;
     return FButton.icon(
       variant: FButtonVariant.ghost,
+      size: compact ? FButtonSizeVariant.sm : FButtonSizeVariant.md,
       semanticsLabel: dark ? '切换浅色主题' : '切换深色主题',
       semanticsTooltip: dark ? '切换浅色主题' : '切换深色主题',
       onPress: () async {
